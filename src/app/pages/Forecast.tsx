@@ -18,6 +18,9 @@ import {
   ChevronDown,
   BarChart2,
   Moon,
+  Sun,
+  Check,
+  X,
 } from 'lucide-react';
 import {
   BarChart,
@@ -36,11 +39,11 @@ export function Forecast() {
   // ── Always calculate from TODAY ──────────────────────────────────────────────
   const nextSunday = useMemo(() => {
     const today = new Date();
-    // If today is Sunday, get next Sunday; otherwise get this coming Sunday
+    // On Sunday, predict TODAY; Monday-Saturday, predict next Sunday
     const dayOfWeek = today.getDay();
     if (dayOfWeek === 0) {
-      // If today is Sunday, predict for next Sunday
-      return addDays(today, 7);
+      // If today is Sunday, predict for today
+      return today;
     } else {
       // Get next Sunday from today
       return getNextSunday(today);
@@ -106,7 +109,7 @@ export function Forecast() {
 
   return (
     <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      <div className="flex flex-col gap-[20px] items-start p-[10px] w-full">
+      <div className="flex flex-col gap-[20px] items-start p-[10px] w-full pb-[80px]">
         {/* Header with Dark Mode Toggle */}
         <div className="flex flex-col items-center justify-center pt-[50px] w-full text-center gap-4">
           <div className="flex items-center justify-between w-full px-4">
@@ -243,7 +246,7 @@ export function Forecast() {
               <button
                 key={label}
                 onClick={() => set(value === 1 ? 0 : 1)}
-                className={`rounded-[8px] py-[10px] px-[6px] text-center transition-colors ${
+                className={`rounded-[8px] py-[10px] px-[6px] text-center transition-colors flex flex-col items-center justify-center ${
                   value === 1
                     ? 'bg-[#029eff] text-white'
                     : darkMode
@@ -252,9 +255,11 @@ export function Forecast() {
                 }`}
               >
                 <p className="font-['Segoe_UI'] text-[12px]">{label}</p>
-                <p className="font-['Segoe_UI'] text-[11px] mt-1 opacity-70">
-                  {value === 1 ? 'Yes' : 'No'}
-                </p>
+                {value === 1 ? (
+                  <Check className="size-4 mt-1" />
+                ) : (
+                  <X className="size-4 mt-1" />
+                )}
               </button>
             ))}
           </div>
@@ -438,9 +443,9 @@ export function Forecast() {
 
         {/* Footer */}
         <div className="w-full rounded-[15px] border-2 border-[#eceef2] p-[10px] flex flex-col items-center gap-[6px]">
-          <p className="font-['Segoe_UI'] text-[18px] text-black">CASTA</p>
+          <p className="font-['Segoe_UI'] text-[18px] text-black">CAST</p>
           <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c]">
-            Church Attendance Statistical Tracker & Analyzer
+            Church Attendance Statistical Tracker
           </p>
           <p className="font-['Segoe_UI'] text-[10px] text-[#9ca3af]">
             Random Forest Regression · 80 Trees · 76 Training Samples

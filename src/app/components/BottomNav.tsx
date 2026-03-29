@@ -9,10 +9,10 @@ export function BottomNav() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className={`h-[60px] shrink-0 w-full border-t-2 ${
+    <div className={`fixed bottom-0 left-0 right-0 h-[60px] z-50 ${
       darkMode
-        ? 'bg-gray-800 border-gray-700'
-        : 'bg-white border-[#eceef2]'
+        ? 'bg-gray-800 border-t-2 border-gray-700'
+        : 'bg-white border-t-2 border-[#eceef2]'
     }`}>
       <div className="flex items-center justify-between px-[50px] py-[5px] h-full">
         <Link 

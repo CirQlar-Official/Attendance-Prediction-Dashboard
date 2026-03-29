@@ -10,10 +10,11 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { format } from 'date-fns';
+import { Sun, Moon } from 'lucide-react';
 
 export function Dashboard() {
   const { sorted, getStats } = useAttendanceData();
-  const { darkMode } = useDarkMode();
+  const { darkMode, setDarkMode } = useDarkMode();
   const stats = getStats();
 
   const chartData = sorted.slice(-10).map(entry => ({
@@ -26,15 +27,30 @@ export function Dashboard() {
 
   return (
     <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      <div className="flex flex-col gap-[20px] items-start p-[10px] w-full">
+      <div className="flex flex-col gap-[20px] items-start p-[10px] w-full pb-[80px]">
         {/* Header */}
-        <div className="flex flex-col items-center justify-center pt-[50px] w-full text-center">
-          <p className={`font-['Segoe_UI'] font-semibold text-[24px] ${darkMode ? 'text-white' : 'text-black'}`}>
-            Avon 2nd Ward
-          </p>
-          <p className={`font-['Segoe_UI'] text-[16px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
-            {formattedDate}
-          </p>
+        <div className="flex flex-col items-center justify-center pt-[50px] w-full text-center gap-4">
+          <div className="flex items-center justify-between w-full px-4">
+            <div className="w-8" /> {/* spacer */}
+            <div>
+              <p className={`font-['Segoe_UI'] font-semibold text-[24px] ${darkMode ? 'text-white' : 'text-black'}`}>
+                Avon 2nd Ward
+              </p>
+              <p className={`font-['Segoe_UI'] text-[16px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
+                {formattedDate}
+              </p>
+            </div>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`px-3 py-2 rounded-lg transition ${
+                darkMode
+                  ? 'bg-yellow-500 text-gray-900'
+                  : 'bg-gray-200 text-gray-700'
+              }`}
+            >
+              {darkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Current Attendance */}

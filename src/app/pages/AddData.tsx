@@ -12,12 +12,12 @@ import {
   type ChurchEvent,
 } from '../hooks/useAttendanceData';
 import { toast } from 'sonner';
-import { Info } from 'lucide-react';
+import { Info, Sun, Moon } from 'lucide-react';
 
 export function AddData() {
   const navigate = useNavigate();
   const { sorted, addEntry } = useAttendanceData();
-  const { darkMode } = useDarkMode();
+  const { darkMode, setDarkMode } = useDarkMode();
 
   // ── User inputs ─────────────────────────────────────────────────────────────
   const [date, setDate] = useState('');
@@ -114,17 +114,29 @@ export function AddData() {
 
   return (
     <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      <div className="flex flex-col gap-[16px] items-start p-[10px] w-full pb-[30px]">
+      <div className="flex flex-col gap-[16px] items-start p-[10px] w-full pb-[80px]">
         <div className={`w-full rounded-[15px] p-[20px] ${
           darkMode
             ? 'bg-gray-800 border border-gray-700'
             : 'bg-white'
         }`}>
-          <p className={`font-['Segoe_UI'] text-[20px] mb-[4px] ${
-            darkMode ? 'text-white' : 'text-black'
-          }`}>
-            Add Attendance Record
-          </p>
+          <div className="flex items-center justify-between mb-[4px]">
+            <p className={`font-['Segoe_UI'] text-[20px] ${
+              darkMode ? 'text-white' : 'text-black'
+            }`}>
+              Add Attendance Record
+            </p>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`px-3 py-2 rounded-lg transition ${
+                darkMode
+                  ? 'bg-yellow-500 text-gray-900'
+                  : 'bg-gray-200 text-gray-700'
+              }`}
+            >
+              {darkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
+            </button>
+          </div>
           <p className={`font-['Segoe_UI'] text-[12px] mb-[20px] ${
             darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'
           }`}>
