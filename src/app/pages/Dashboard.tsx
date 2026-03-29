@@ -1,4 +1,5 @@
 import { useAttendanceData } from '../hooks/useAttendanceData';
+import { useDarkMode } from '../context/DarkModeContext';
 import {
   LineChart,
   Line,
@@ -12,6 +13,7 @@ import { format } from 'date-fns';
 
 export function Dashboard() {
   const { sorted, getStats } = useAttendanceData();
+  const { darkMode } = useDarkMode();
   const stats = getStats();
 
   const chartData = sorted.slice(-10).map(entry => ({
@@ -23,20 +25,24 @@ export function Dashboard() {
   const formattedDate = format(today, 'EEEE, MMMM d, yyyy');
 
   return (
-    <div className="flex-1 min-h-0 w-full overflow-auto">
+    <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       <div className="flex flex-col gap-[20px] items-start p-[10px] w-full">
         {/* Header */}
         <div className="flex flex-col items-center justify-center pt-[50px] w-full text-center">
-          <p className="font-['Segoe_UI'] font-semibold text-[24px] text-black">
+          <p className={`font-['Segoe_UI'] font-semibold text-[24px] ${darkMode ? 'text-white' : 'text-black'}`}>
             Avon 2nd Ward
           </p>
-          <p className="font-['Segoe_UI'] text-[16px] text-[#4c4c4c]">
+          <p className={`font-['Segoe_UI'] text-[16px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
             {formattedDate}
           </p>
         </div>
 
         {/* Current Attendance */}
-        <div className="bg-[#000124] h-[150px] w-full rounded-[15px] p-[30px] flex flex-col items-center justify-between text-center text-white">
+        <div className={`h-[150px] w-full rounded-[15px] p-[30px] flex flex-col items-center justify-between text-center ${
+          darkMode
+            ? 'bg-gradient-to-br from-blue-900 to-blue-800 text-white'
+            : 'bg-[#000124] text-white'
+        }`}>
           <p className="font-['Segoe_UI'] font-semibold text-[20px]">
             Most Recent Attendance
           </p>
@@ -47,65 +53,85 @@ export function Dashboard() {
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-[10px] w-full">
-          <div className="rounded-[15px] border-2 border-[#eceef2] p-[15px] flex flex-col items-start justify-between h-[110px]">
-            <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c]">
+          <div className={`rounded-[15px] border-2 p-[15px] flex flex-col items-start justify-between h-[110px] ${
+            darkMode
+              ? 'border-gray-700 bg-gray-800 text-white'
+              : 'border-[#eceef2] bg-white text-black'
+          }`}>
+            <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
               Last Week
             </p>
-            <p className="font-['Segoe_UI'] text-[22px] text-black">
+            <p className={`font-['Segoe_UI'] text-[22px] ${darkMode ? 'text-white' : 'text-black'}`}>
               {stats?.lastWeek ?? 0}
             </p>
           </div>
 
-          <div className="rounded-[15px] border-2 border-[#eceef2] p-[15px] flex flex-col items-start justify-between h-[110px]">
-            <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c]">
+          <div className={`rounded-[15px] border-2 p-[15px] flex flex-col items-start justify-between h-[110px] ${
+            darkMode
+              ? 'border-gray-700 bg-gray-800 text-white'
+              : 'border-[#eceef2] bg-white text-black'
+          }`}>
+            <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
               Month Avg
             </p>
-            <p className="font-['Segoe_UI'] text-[22px] text-black">
+            <p className={`font-['Segoe_UI'] text-[22px] ${darkMode ? 'text-white' : 'text-black'}`}>
               {stats?.monthAvg ?? 0}
             </p>
           </div>
 
-          <div className="rounded-[15px] border-2 border-[#eceef2] p-[15px] flex flex-col items-start justify-between h-[110px]">
-            <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c]">
+          <div className={`rounded-[15px] border-2 p-[15px] flex flex-col items-start justify-between h-[110px] ${
+            darkMode
+              ? 'border-gray-700 bg-gray-800 text-white'
+              : 'border-[#eceef2] bg-white text-black'
+          }`}>
+            <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
               YTD Avg
             </p>
-            <p className="font-['Segoe_UI'] text-[22px] text-black">
+            <p className={`font-['Segoe_UI'] text-[22px] ${darkMode ? 'text-white' : 'text-black'}`}>
               {stats?.ytdAvg ?? 0}
             </p>
           </div>
         </div>
 
         {/* Graph */}
-        <div className="h-[300px] w-full rounded-[15px] border-2 border-[#eceef2] p-[20px]">
-          <p className="font-['Segoe_UI'] text-[16px] text-black mb-[15px]">
+        <div className={`h-[300px] w-full rounded-[15px] border-2 p-[20px] ${
+          darkMode
+            ? 'border-gray-700 bg-gray-800'
+            : 'border-[#eceef2] bg-white'
+        }`}>
+          <p className={`font-['Segoe_UI'] text-[16px] mb-[15px] ${darkMode ? 'text-white' : 'text-black'}`}>
             Attendance Trend (Last 10 Sundays)
           </p>
           <ResponsiveContainer width="100%" height="85%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eceef2" />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke={darkMode ? '#444' : '#eceef2'}
+              />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fill: '#4c4c4c' }}
-                stroke="#eceef2"
+                tick={{ fontSize: 11, fill: darkMode ? '#999' : '#4c4c4c' }}
+                stroke={darkMode ? '#444' : '#eceef2'}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: '#4c4c4c' }}
-                stroke="#eceef2"
+                tick={{ fontSize: 11, fill: darkMode ? '#999' : '#4c4c4c' }}
+                stroke={darkMode ? '#444' : '#eceef2'}
                 domain={['auto', 'auto']}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #eceef2',
+                  backgroundColor: darkMode ? '#333' : '#fff',
+                  border: `1px solid ${darkMode ? '#555' : '#eceef2'}`,
                   borderRadius: '8px',
+                  color: darkMode ? '#fff' : '#000',
                 }}
               />
               <Line
                 type="monotone"
                 dataKey="attendance"
-                stroke="#000124"
+                stroke={darkMode ? '#029eff' : '#000124'}
                 strokeWidth={2}
-                dot={{ fill: '#000124', r: 4 }}
+                dot={{ fill: darkMode ? '#029eff' : '#000124', r: 4 }}
                 activeDot={{ r: 6 }}
               />
             </LineChart>

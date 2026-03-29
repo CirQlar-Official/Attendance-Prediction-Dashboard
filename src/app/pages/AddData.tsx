@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { useAttendanceData } from '../hooks/useAttendanceData';
+import { useDarkMode } from '../context/DarkModeContext';
 import {
   CHURCH_EVENTS,
   computeLagFeatures,
@@ -16,6 +17,7 @@ import { Info } from 'lucide-react';
 export function AddData() {
   const navigate = useNavigate();
   const { sorted, addEntry } = useAttendanceData();
+  const { darkMode } = useDarkMode();
 
   // ── User inputs ─────────────────────────────────────────────────────────────
   const [date, setDate] = useState('');
@@ -99,8 +101,8 @@ export function AddData() {
       onClick={() => onChange(value === 1 ? 0 : 1)}
       className={`flex-1 rounded-[8px] py-[10px] text-center transition-colors ${
         value === 1
-          ? 'bg-[#000124] text-white'
-          : 'bg-[#d9d9d9] text-black'
+          ? darkMode ? 'bg-blue-600 text-white' : 'bg-[#000124] text-white'
+          : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-[#d9d9d9] text-black'
       }`}
     >
       <p className="font-['Segoe_UI'] text-[13px]">{label}</p>
@@ -111,29 +113,45 @@ export function AddData() {
   );
 
   return (
-    <div className="flex-1 min-h-0 w-full overflow-auto">
+    <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       <div className="flex flex-col gap-[16px] items-start p-[10px] w-full pb-[30px]">
-        <div className="w-full rounded-[15px] p-[20px]">
-          <p className="font-['Segoe_UI'] text-[20px] text-black mb-[4px]">
+        <div className={`w-full rounded-[15px] p-[20px] ${
+          darkMode
+            ? 'bg-gray-800 border border-gray-700'
+            : 'bg-white'
+        }`}>
+          <p className={`font-['Segoe_UI'] text-[20px] mb-[4px] ${
+            darkMode ? 'text-white' : 'text-black'
+          }`}>
             Add Attendance Record
           </p>
-          <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c] mb-[20px]">
+          <p className={`font-['Segoe_UI'] text-[12px] mb-[20px] ${
+            darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'
+          }`}>
             Lag, Roll & Delta values are computed automatically from history.
           </p>
 
           {/* ── Date ── */}
           <div className="mb-[14px]">
-            <label className="font-['Segoe_UI'] text-[14px] text-black block mb-[6px]">
+            <label className={`font-['Segoe_UI'] text-[14px] block mb-[6px] ${
+              darkMode ? 'text-white' : 'text-black'
+            }`}>
               Date <span className="text-[#ef4444]">*</span>
             </label>
             <input
               type="date"
               value={date}
               onChange={e => handleDateChange(e.target.value)}
-              className="bg-[#d9d9d9] w-full rounded-[8px] px-[12px] py-[10px] font-['Segoe_UI'] text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000124]"
+              className={`w-full rounded-[8px] px-[12px] py-[10px] font-['Segoe_UI'] text-[14px] outline-none focus:ring-2 ${
+                darkMode
+                  ? 'bg-gray-700 text-white focus:ring-blue-500'
+                  : 'bg-[#d9d9d9] text-black focus:ring-[#000124]'
+              }`}
             />
             {dateInfo && (
-              <p className="font-['Segoe_UI'] text-[11px] text-[#4c4c4c] mt-1">
+              <p className={`font-['Segoe_UI'] text-[11px] mt-1 ${
+                darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'
+              }`}>
                 Year {dateInfo.year} · Month {dateInfo.month} · Week {dateInfo.week}
               </p>
             )}
@@ -141,7 +159,9 @@ export function AddData() {
 
           {/* ── Attendance ── */}
           <div className="mb-[14px]">
-            <label className="font-['Segoe_UI'] text-[14px] text-black block mb-[6px]">
+            <label className={`font-['Segoe_UI'] text-[14px] block mb-[6px] ${
+              darkMode ? 'text-white' : 'text-black'
+            }`}>
               Attendance Count <span className="text-[#ef4444]">*</span>
             </label>
             <input
@@ -150,19 +170,29 @@ export function AddData() {
               onChange={e => setAttendanceStr(e.target.value)}
               placeholder="e.g. 165"
               min="0"
-              className="bg-[#d9d9d9] w-full rounded-[8px] px-[12px] py-[10px] font-['Segoe_UI'] text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000124]"
+              className={`w-full rounded-[8px] px-[12px] py-[10px] font-['Segoe_UI'] text-[14px] outline-none focus:ring-2 ${
+                darkMode
+                  ? 'bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500'
+                  : 'bg-[#d9d9d9] text-black focus:ring-[#000124]'
+              }`}
             />
           </div>
 
           {/* ── Church Event ── */}
           <div className="mb-[14px]">
-            <label className="font-['Segoe_UI'] text-[14px] text-black block mb-[6px]">
+            <label className={`font-['Segoe_UI'] text-[14px] block mb-[6px] ${
+              darkMode ? 'text-white' : 'text-black'
+            }`}>
               Church Event
             </label>
             <select
               value={churchEvent}
               onChange={e => setChurchEvent(e.target.value as ChurchEvent)}
-              className="bg-[#d9d9d9] w-full rounded-[8px] px-[12px] py-[10px] font-['Segoe_UI'] text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000124]"
+              className={`w-full rounded-[8px] px-[12px] py-[10px] font-['Segoe_UI'] text-[14px] outline-none focus:ring-2 ${
+                darkMode
+                  ? 'bg-gray-700 text-white focus:ring-blue-500'
+                  : 'bg-[#d9d9d9] text-black focus:ring-[#000124]'
+              }`}
             >
               {CHURCH_EVENTS.map(ev => (
                 <option key={ev} value={ev}>
@@ -174,9 +204,13 @@ export function AddData() {
 
           {/* ── Boolean Flags ── */}
           <div className="mb-[20px]">
-            <label className="font-['Segoe_UI'] text-[14px] text-black block mb-[6px]">
+            <label className={`font-['Segoe_UI'] text-[14px] block mb-[6px] ${
+              darkMode ? 'text-white' : 'text-black'
+            }`}>
               Context Flags
-              <span className="font-['Segoe_UI'] text-[11px] text-[#4c4c4c] ml-2">
+              <span className={`font-['Segoe_UI'] text-[11px] ml-2 ${
+                darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'
+              }`}>
                 (auto-suggested from date)
               </span>
             </label>
@@ -200,10 +234,16 @@ export function AddData() {
           </div>
 
           {/* ── Auto-computed Features Preview ── */}
-          <div className="rounded-[12px] border border-[#eceef2] p-[16px] mb-[20px]">
+          <div className={`rounded-[12px] border p-[16px] mb-[20px] ${
+            darkMode
+              ? 'border-gray-700 bg-gray-800'
+              : 'border-[#eceef2] bg-white'
+          }`}>
             <div className="flex items-center gap-2 mb-[10px]">
-              <Info className="size-4 text-[#029eff]" />
-              <p className="font-['Segoe_UI'] text-[13px] text-[#4c4c4c]">
+              <Info className={`size-4 ${darkMode ? 'text-blue-400' : 'text-[#029eff]'}`} />
+              <p className={`font-['Segoe_UI'] text-[13px] ${
+                darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'
+              }`}>
                 Auto-computed model features
               </p>
             </div>
@@ -234,13 +274,19 @@ export function AddData() {
                 ].map(({ label, value, desc, signed }) => (
                   <div
                     key={label}
-                    className="bg-[#f7f8fa] rounded-[8px] p-[10px] flex flex-col"
+                    className={`rounded-[8px] p-[10px] flex flex-col ${
+                      darkMode ? 'bg-gray-700' : 'bg-[#f7f8fa]'
+                    }`}
                   >
-                    <p className="font-['Segoe_UI'] text-[10px] text-[#9ca3af] uppercase tracking-wide">
+                    <p className={`font-['Segoe_UI'] text-[10px] uppercase tracking-wide ${
+                      darkMode ? 'text-gray-400' : 'text-[#9ca3af]'
+                    }`}>
                       {label}
                     </p>
                     <p
-                      className="font-['Segoe_UI'] text-[18px] text-black mt-1"
+                      className={`font-['Segoe_UI'] text-[18px] mt-1 ${
+                        darkMode ? 'text-white' : 'text-black'
+                      }`}
                       style={
                         signed
                           ? {
@@ -249,7 +295,7 @@ export function AddData() {
                                   ? '#14ae5c'
                                   : value < 0
                                   ? '#ef4444'
-                                  : '#4c4c4c',
+                                  : darkMode ? '#999' : '#4c4c4c',
                             }
                           : {}
                       }
@@ -257,14 +303,18 @@ export function AddData() {
                       {signed && value > 0 ? '+' : ''}
                       {value}
                     </p>
-                    <p className="font-['Segoe_UI'] text-[10px] text-[#9ca3af] mt-0.5">
+                    <p className={`font-['Segoe_UI'] text-[10px] mt-0.5 ${
+                      darkMode ? 'text-gray-400' : 'text-[#9ca3af]'
+                    }`}>
                       {desc}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="font-['Segoe_UI'] text-[13px] text-[#9ca3af] italic">
+              <p className={`font-['Segoe_UI'] text-[13px] italic ${
+                darkMode ? 'text-gray-400' : 'text-[#9ca3af]'
+              }`}>
                 Enter attendance count above to preview computed features.
               </p>
             )}
@@ -272,18 +322,26 @@ export function AddData() {
 
           {/* ── Recent history for reference ── */}
           {sorted.length > 0 && (
-            <div className="rounded-[12px] border border-[#eceef2] p-[14px] mb-[20px]">
-              <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c] mb-[8px]">
+            <div className={`rounded-[12px] border p-[14px] mb-[20px] ${
+              darkMode
+                ? 'border-gray-700 bg-gray-800'
+                : 'border-[#eceef2] bg-white'
+            }`}>
+              <p className={`font-['Segoe_UI'] text-[12px] mb-[8px] ${
+                darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'
+              }`}>
                 Last 4 records (for reference)
               </p>
               {[...sorted].reverse().slice(0, 4).map((e, idx) => (
                 <div
                   key={e.id}
                   className={`flex justify-between py-[6px] ${
-                    idx < 3 ? 'border-b border-[#eceef2]' : ''
+                    idx < 3 ? `border-b ${darkMode ? 'border-gray-700' : 'border-[#eceef2]'}` : ''
                   }`}
                 >
-                  <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c]">
+                  <p className={`font-['Segoe_UI'] text-[12px] ${
+                    darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'
+                  }`}>
                     {e.date}
                     {e.churchEvent !== 'None' && (
                       <span className="ml-2 text-[10px] text-[#029eff]">
@@ -291,7 +349,9 @@ export function AddData() {
                       </span>
                     )}
                   </p>
-                  <p className="font-['Segoe_UI'] text-[12px] text-black">
+                  <p className={`font-['Segoe_UI'] text-[12px] ${
+                    darkMode ? 'text-white' : 'text-black'
+                  }`}>
                     {e.attendance}
                   </p>
                 </div>
@@ -303,7 +363,11 @@ export function AddData() {
           <div className="w-full flex gap-[10px]">
             <button
               onClick={handleSave}
-              className="flex-1 bg-[#000124] h-[44px] rounded-[8px] flex items-center justify-center"
+              className={`flex-1 h-[44px] rounded-[8px] flex items-center justify-center font-semibold text-white ${
+                darkMode
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-[#000124] hover:bg-[#000814]'
+              }`}
             >
               <span className="font-['Segoe_UI'] text-[15px] text-white">
                 Save Record
@@ -311,9 +375,15 @@ export function AddData() {
             </button>
             <button
               onClick={handleCancel}
-              className="flex-1 h-[44px] rounded-[8px] border border-[#d9d9d9] flex items-center justify-center"
+              className={`flex-1 h-[44px] rounded-[8px] border flex items-center justify-center ${
+                darkMode
+                  ? 'border-gray-600 bg-gray-800 hover:bg-gray-700'
+                  : 'border-[#d9d9d9] bg-white hover:bg-[#f7f8fa]'
+              }`}
             >
-              <span className="font-['Segoe_UI'] text-[15px] text-black">
+              <span className={`font-['Segoe_UI'] text-[15px] ${
+                darkMode ? 'text-gray-300' : 'text-black'
+              }`}>
                 Cancel
               </span>
             </button>
