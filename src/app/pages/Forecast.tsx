@@ -1,0 +1,381 @@
+import { useState, useMemo } from 'react';
+import { useAttendanceData } from '../hooks/useAttendanceData';
+import {
+  CHURCH_EVENTS,
+  autoIsSummer,
+  autoIsHoliday,
+  isFastSundayDate,
+  getWeekOfYear,
+  type ChurchEvent,
+} from '../hooks/useAttendanceData';
+import { format, addDays } from 'date-fns';
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ChevronUp,
+  ChevronDown,
+  BarChart2,
+} from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts';
+
+export function Forecast() {
+  const { sorted, predictNextAttendance } = useAttendanceData();
+
+  // Compute next Sunday date
+  const nextSunday = useMemo(() => {
+    if (sorted.length === 0) return new Date();
+    const lastDate = new Date(sorted[sorted.length - 1].date + 'T12:00:00');
+    return addDays(lastDate, 7);
+  }, [sorted]);
+
+  const nextMonth = nextSunday.getMonth() + 1;
+  const nextWeek = getWeekOfYear(nextSunday);
+
+  // ── User-adjustable context ──────────────────────────────────────────────────
+  const [isSummer, setIsSummer] = useState<0 | 1>(autoIsSummer(nextMonth));
+  const [isHolidaySeason, setIsHolidaySeason] = useState<0 | 1>(
+    autoIsHoliday(nextMonth)
+  );
+  const [churchEvent, setChurchEvent] = useState<ChurchEvent>('None');
+  const [isFastSunday, setIsFastSunday] = useState<0 | 1>(
+    isFastSundayDate(nextSunday)
+  );
+
+  // ── Run RF prediction ────────────────────────────────────────────────────────
+  const result = useMemo(
+    () =>
+      predictNextAttendance({
+        isSummer,
+        isHolidaySeason,
+        churchEvent,
+        isFastSunday,
+        month: nextMonth,
+        week: nextWeek,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isSummer, isHolidaySeason, churchEvent, isFastSunday, sorted.length]
+  );
+
+  const { prediction, std, confidence, featureImps } = result;
+
+  // ── Derive trend vs most-recent actual ──────────────────────────────────────
+  const lastActual =
+    sorted.length > 0 ? sorted[sorted.length - 1].attendance : 0;
+  const diff = prediction - lastActual;
+  const pctChange = lastActual > 0 ? ((diff / lastActual) * 100).toFixed(1) : '0';
+
+  const confidenceColor =
+    confidence === 'high'
+      ? '#14ae5c'
+      : confidence === 'medium'
+      ? '#029eff'
+      : '#ff9500';
+
+  const confidenceLabel =
+    confidence === 'high'
+      ? 'High Confidence'
+      : confidence === 'medium'
+      ? 'Medium Confidence'
+      : 'Low Confidence';
+
+  // Top 5 importances for bar chart
+  const topImps = [...featureImps]
+    .sort((a, b) => b.importance - a.importance)
+    .slice(0, 6);
+
+  const recentEntries = [...sorted].reverse().slice(0, 5);
+
+  const today = new Date();
+  const formattedToday = format(today, 'EEEE, MMMM d, yyyy');
+
+  return (
+    <div className="flex-1 min-h-0 w-full overflow-auto">
+      <div className="flex flex-col gap-[20px] items-start p-[10px] w-full">
+        {/* Header */}
+        <div className="flex flex-col items-center justify-center pt-[50px] w-full text-center">
+          <p className="font-['Segoe_UI'] font-semibold text-[24px] text-black">
+            Attendance Forecast
+          </p>
+          <p className="font-['Segoe_UI'] text-[14px] text-[#4c4c4c]">
+            {formattedToday}
+          </p>
+          <p className="font-['Segoe_UI'] text-[12px] text-[#029eff] mt-1">
+            Predicting: {format(nextSunday, 'MMMM d, yyyy')}
+          </p>
+        </div>
+
+        {/* Prediction Card */}
+        <div
+          className="w-full rounded-[15px] p-[30px] flex flex-col items-center justify-between border-2 border-[#029eff] gap-4"
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(0,1,36,0.92) 0%, rgba(0,60,120,0.88) 100%)',
+          }}
+        >
+          <p className="font-['Segoe_UI'] font-semibold text-[18px] text-white">
+            RF Model Prediction
+          </p>
+
+          <p className="font-['Segoe_UI'] font-light text-[60px] text-white leading-none">
+            {prediction}
+          </p>
+
+          <p className="font-['Segoe_UI'] text-[13px] text-[#aac4ff]">
+            ± {std} range across {result.treePredictions.length} trees
+          </p>
+
+          <div className="w-full flex items-center justify-between">
+            <p
+              className="font-['Segoe_UI'] font-semibold text-[14px]"
+              style={{ color: confidenceColor }}
+            >
+              {confidenceLabel}
+            </p>
+            <div className="flex items-center gap-1">
+              {diff > 0 ? (
+                <ChevronUp className="size-4 text-[#14ae5c]" />
+              ) : diff < 0 ? (
+                <ChevronDown className="size-4 text-[#ff4f4f]" />
+              ) : (
+                <Minus className="size-4 text-white" />
+              )}
+              <p
+                className="font-['Segoe_UI'] text-[14px]"
+                style={{
+                  color: diff > 0 ? '#14ae5c' : diff < 0 ? '#ff4f4f' : 'white',
+                }}
+              >
+                {diff > 0 ? '+' : ''}
+                {diff} ({pctChange}%) vs last week
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Context Controls */}
+        <div className="w-full rounded-[15px] border-2 border-[#eceef2] p-[20px]">
+          <p className="font-['Segoe_UI'] text-[16px] text-black mb-[15px]">
+            Adjust Next-Week Context
+          </p>
+
+          {/* Church Event */}
+          <div className="mb-[12px]">
+            <label className="font-['Segoe_UI'] text-[13px] text-[#4c4c4c] block mb-[6px]">
+              Church Event
+            </label>
+            <select
+              value={churchEvent}
+              onChange={e => setChurchEvent(e.target.value as ChurchEvent)}
+              className="bg-[#eceef2] w-full rounded-[8px] px-[10px] py-[8px] font-['Segoe_UI'] text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000124]"
+            >
+              {CHURCH_EVENTS.map(ev => (
+                <option key={ev} value={ev}>
+                  {ev}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Toggle flags */}
+          <div className="grid grid-cols-3 gap-[8px]">
+            {[
+              {
+                label: 'Fast Sunday',
+                value: isFastSunday,
+                set: setIsFastSunday,
+              },
+              {
+                label: 'Summer',
+                value: isSummer,
+                set: setIsSummer,
+              },
+              {
+                label: 'Holiday Season',
+                value: isHolidaySeason,
+                set: setIsHolidaySeason,
+              },
+            ].map(({ label, value, set }) => (
+              <button
+                key={label}
+                onClick={() => set(value === 1 ? 0 : 1)}
+                className={`rounded-[8px] py-[10px] px-[6px] text-center transition-colors ${
+                  value === 1
+                    ? 'bg-[#000124] text-white'
+                    : 'bg-[#eceef2] text-[#4c4c4c]'
+                }`}
+              >
+                <p className="font-['Segoe_UI'] text-[12px]">{label}</p>
+                <p className="font-['Segoe_UI'] text-[11px] mt-1 opacity-70">
+                  {value === 1 ? 'Yes' : 'No'}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Feature Importances */}
+        {topImps.length > 0 && (
+          <div className="w-full rounded-[15px] border-2 border-[#eceef2] p-[20px]">
+            <div className="flex items-center gap-2 mb-[15px]">
+              <BarChart2 className="size-4 text-[#000124]" />
+              <p className="font-['Segoe_UI'] text-[16px] text-black">
+                Feature Importances
+              </p>
+            </div>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart
+                data={topImps}
+                layout="vertical"
+                margin={{ left: 10, right: 20 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eceef2" />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 10, fill: '#4c4c4c' }}
+                  tickFormatter={v => `${v}%`}
+                  stroke="#eceef2"
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={72}
+                  tick={{ fontSize: 10, fill: '#4c4c4c' }}
+                  stroke="none"
+                />
+                <Tooltip
+                  formatter={(v: number) => [`${v}%`, 'Importance']}
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #eceef2',
+                    borderRadius: '8px',
+                    fontSize: 12,
+                  }}
+                />
+                <Bar dataKey="importance" fill="#000124" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <p className="font-['Segoe_UI'] text-[10px] text-[#9ca3af] mt-2 text-center">
+              Weighted split-frequency across {result.treePredictions.length} RF trees
+            </p>
+          </div>
+        )}
+
+        {/* Model Inputs Used */}
+        <div className="w-full rounded-[15px] border-2 border-[#eceef2] p-[20px]">
+          <p className="font-['Segoe_UI'] text-[16px] text-black mb-[12px]">
+            Model Inputs (Next Week)
+          </p>
+          {sorted.length >= 1 && (() => {
+            const n = sorted.length;
+            const lag1 = sorted[n - 1].attendance;
+            const lag4 = n >= 4 ? sorted[n - 4].attendance : 0;
+            const last4 = sorted.slice(-4).map(e => e.attendance);
+            const roll4 = last4.length
+              ? Math.round(last4.reduce((a, b) => a + b, 0) / last4.length)
+              : 0;
+            const lag2 = n >= 2 ? sorted[n - 2].attendance : 0;
+            const delta1 = lag1 - lag2;
+            const delta4approx = lag1 - lag4;
+
+            const rows = [
+              { label: 'Lag 1 (last week)', value: lag1 },
+              { label: 'Lag 4 (4 weeks ago)', value: lag4 },
+              { label: 'Roll 4 (4-week avg)', value: roll4 },
+              { label: 'Delta 1 (lag1 − lag2)', value: delta1, signed: true },
+              { label: 'Delta 4 approx (lag1 − lag4)', value: delta4approx, signed: true },
+              { label: 'Month', value: nextMonth },
+              { label: 'Week of Year', value: nextWeek },
+            ];
+
+            return rows.map(({ label, value, signed }) => (
+              <div
+                key={label}
+                className="flex items-center justify-between py-[8px] border-b border-[#eceef2] last:border-b-0"
+              >
+                <p className="font-['Segoe_UI'] text-[13px] text-[#4c4c4c]">
+                  {label}
+                </p>
+                <p
+                  className="font-['Segoe_UI'] text-[13px] text-black"
+                  style={
+                    signed
+                      ? { color: value > 0 ? '#14ae5c' : value < 0 ? '#ef4444' : '#4c4c4c' }
+                      : {}
+                  }
+                >
+                  {signed && value > 0 ? '+' : ''}
+                  {value}
+                </p>
+              </div>
+            ));
+          })()}
+        </div>
+
+        {/* Recent Attendance */}
+        <div className="w-full rounded-[15px] border-2 border-[#eceef2] p-[20px]">
+          <p className="font-['Segoe_UI'] text-[16px] text-black mb-[10px]">
+            Recent Attendance
+          </p>
+          {recentEntries.map((entry, index) => {
+            const trendIcon =
+              index < recentEntries.length - 1 ? (
+                entry.attendance > recentEntries[index + 1].attendance ? (
+                  <TrendingUp className="size-3.5 text-[#14ae5c]" />
+                ) : entry.attendance < recentEntries[index + 1].attendance ? (
+                  <TrendingDown className="size-3.5 text-[#ef4444]" />
+                ) : (
+                  <Minus className="size-3.5 text-[#9ca3af]" />
+                )
+              ) : null;
+
+            return (
+              <div
+                key={entry.id}
+                className={`flex items-center py-[10px] ${
+                  index !== recentEntries.length - 1
+                    ? 'border-b border-[#eceef2]'
+                    : ''
+                }`}
+              >
+                <div className="flex-1">
+                  <p className="font-['Segoe_UI'] text-[14px] text-black">
+                    {format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}
+                  </p>
+                  {entry.churchEvent !== 'None' && (
+                    <p className="font-['Segoe_UI'] text-[11px] text-[#4c4c4c]">
+                      {entry.churchEvent}
+                    </p>
+                  )}
+                </div>
+                {trendIcon && <span className="mr-2">{trendIcon}</span>}
+                <p className="font-['Segoe_UI'] text-[16px] text-black">
+                  {entry.attendance}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="w-full rounded-[15px] border-2 border-[#eceef2] p-[10px] flex flex-col items-center gap-[6px]">
+          <p className="font-['Segoe_UI'] text-[18px] text-black">CASTA</p>
+          <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c]">
+            Church Attendance Statistical Tracker & Analyzer
+          </p>
+          <p className="font-['Segoe_UI'] text-[10px] text-[#9ca3af]">
+            Random Forest Regression · 80 Trees · 76 Training Samples
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
