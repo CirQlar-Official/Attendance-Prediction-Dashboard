@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useAttendanceData } from '../hooks/useAttendanceData';
+import { useDarkMode } from '../context/DarkModeContext';
 import {
   CHURCH_EVENTS,
   autoIsSummer,
@@ -8,7 +9,7 @@ import {
   getWeekOfYear,
   type ChurchEvent,
 } from '../hooks/useAttendanceData';
-import { format, addDays } from 'date-fns';
+import { format, addDays, nextSunday as getNextSunday } from 'date-fns';
 import {
   TrendingUp,
   TrendingDown,
@@ -16,6 +17,7 @@ import {
   ChevronUp,
   ChevronDown,
   BarChart2,
+  Moon,
 } from 'lucide-react';
 import {
   BarChart,
@@ -29,20 +31,26 @@ import {
 
 export function Forecast() {
   const { sorted, predictNextAttendance } = useAttendanceData();
-  const [predictNextWeek, setPredictNextWeek] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, setDarkMode } = useDarkMode();
 
-  // Compute next Sunday date
+  // ── Always calculate from TODAY ──────────────────────────────────────────────
   const nextSunday = useMemo(() => {
-    if (sorted.length === 0) return new Date();
-    const lastDate = new Date(sorted[sorted.length - 1].date + 'T12:00:00');
-    return predictNextWeek ? addDays(lastDate, 7) : lastDate;
-  }, [sorted, predictNextWeek]);
+    const today = new Date();
+    // If today is Sunday, get next Sunday; otherwise get this coming Sunday
+    const dayOfWeek = today.getDay();
+    if (dayOfWeek === 0) {
+      // If today is Sunday, predict for next Sunday
+      return addDays(today, 7);
+    } else {
+      // Get next Sunday from today
+      return getNextSunday(today);
+    }
+  }, []);
 
   const nextMonth = nextSunday.getMonth() + 1;
   const nextWeek = getWeekOfYear(nextSunday);
 
-  // ── User-adjustable context ──────────────────────────────────────────────────
+  // ── User state (toggleable) ───────────────────────────────────────────────────
   const [isSummer, setIsSummer] = useState<0 | 1>(autoIsSummer(nextMonth));
   const [isHolidaySeason, setIsHolidaySeason] = useState<0 | 1>(
     autoIsHoliday(nextMonth)
@@ -96,48 +104,36 @@ export function Forecast() {
 
   const recentEntries = [...sorted].reverse().slice(0, 5);
 
-  const today = new Date();
-  const formattedToday = format(today, 'EEEE, MMMM d, yyyy');
-
   return (
     <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       <div className="flex flex-col gap-[20px] items-start p-[10px] w-full">
-        {/* Header with Toggles */}
+        {/* Header with Dark Mode Toggle */}
         <div className="flex flex-col items-center justify-center pt-[50px] w-full text-center gap-4">
-          <p className={`font-['Segoe_UI'] font-semibold text-[24px] ${darkMode ? 'text-white' : 'text-black'}`}>
-            Attendance Forecast
-          </p>
-          <p className={`font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
-            {formattedToday}
-          </p>
-          <p className="font-['Segoe_UI'] text-[12px] text-[#029eff] mt-1">
-            Predicting: {format(nextSunday, 'MMMM d, yyyy')}
-          </p>
-          
-          {/* Week & Dark Mode Toggles */}
-          <div className="flex gap-4 mt-4 w-full justify-center flex-wrap">
-            <button
-              onClick={() => setPredictNextWeek(!predictNextWeek)}
-              className={`px-4 py-2 rounded-lg font-['Segoe_UI'] text-sm font-semibold transition ${
-                predictNextWeek
-                  ? 'bg-[#029eff] text-white'
-                  : `${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'}`
-              }`}
-            >
-              {predictNextWeek ? 'Next Week' : 'Current Week'}
-            </button>
-            
+          <div className="flex items-center justify-between w-full px-4">
+            <div className="w-8" /> {/* spacer */}
+            <div>
+              <p className={`font-['Segoe_UI'] font-semibold text-[24px] ${darkMode ? 'text-white' : 'text-black'}`}>
+                Attendance Forecast
+              </p>
+              <p className={`font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
+                {format(new Date(), 'EEEE, MMMM d, yyyy')}
+              </p>
+            </div>
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`px-4 py-2 rounded-lg font-['Segoe_UI'] text-sm font-semibold transition ${
+              className={`px-3 py-2 rounded-lg transition ${
                 darkMode
                   ? 'bg-yellow-500 text-gray-900'
                   : 'bg-gray-200 text-gray-700'
               }`}
             >
-              {darkMode ? 'Light' : 'Dark'}
+              {darkMode ? '☀️' : '🌙'}
             </button>
           </div>
+          
+          <p className="font-['Segoe_UI'] text-[12px] text-[#029eff] mt-1">
+            Predicting: {format(nextSunday, 'MMMM d, yyyy')}
+          </p>
         </div>
 
         {/* Prediction Card */}
