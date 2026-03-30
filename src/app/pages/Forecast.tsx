@@ -10,7 +10,7 @@ import {
   getWeekOfYear,
   type ChurchEvent,
 } from '../hooks/useAttendanceData';
-import { format, addDays, nextSunday as getNextSunday } from 'date-fns';
+import { format, nextSunday as getNextSunday } from 'date-fns';
 import {
   TrendingUp,
   TrendingDown,

@@ -244,7 +244,8 @@ export function computeNextWeekFeatures(
 }
 
 // ─── Seed data from CASTA_data.csv ───────────────────────────────────────────
-
+// Note: Seed data currently loaded from Supabase, keeping structure for reference
+/*
 const SEED_DATA: AttendanceEntry[] = [
   { id:'s1',  date:'2024-01-07', attendance:158, year:2024, month:1,  week:1,  lag1:0,   lag4:0,   roll4:0,      delta1:0,    delta4:0,   isSummer:0, isHolidaySeason:0, churchEvent:'None',       isFastSunday:1 },
   { id:'s2',  date:'2024-01-21', attendance:143, year:2024, month:1,  week:4,  lag1:158, lag4:0,   roll4:0,      delta1:158,  delta4:0,   isSummer:0, isHolidaySeason:0, churchEvent:'None',       isFastSunday:0 },
@@ -323,6 +324,7 @@ const SEED_DATA: AttendanceEntry[] = [
   { id:'s75', date:'2025-08-31', attendance:173, year:2025, month:8,  week:36, lag1:173, lag4:170, roll4:172.25, delta1:3,    delta4:3,   isSummer:1, isHolidaySeason:0, churchEvent:'None',        isFastSunday:0 },
   { id:'s76', date:'2025-09-07', attendance:187, year:2025, month:9,  week:37, lag1:173, lag4:176, roll4:173,    delta1:0,    delta4:11,  isSummer:0, isHolidaySeason:0, churchEvent:'None',        isFastSunday:1 },
 ];
+*/
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
 
@@ -379,11 +381,17 @@ export function useAttendanceData() {
       setEntries(initialData);
       setLoading(false);
 
-      // Subscribe to real-time changes
-      const subscription = supabase
-        .from('attendance_entries')
-        .on('*', (payload) => {
-          if (payload.eventType === 'INSERT') {
+      // Subscribe to real-time changes using modern Supabase API
+      const channel = supabase
+        .channel('attendance_entries_insert')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'attendance_entries',
+          },
+          (payload: any) => {
             const newEntry = payload.new as any;
             setEntries(prev => [
               ...prev,
@@ -406,11 +414,11 @@ export function useAttendanceData() {
               },
             ]);
           }
-        })
+        )
         .subscribe();
 
       return () => {
-        supabase.removeSubscription(subscription);
+        channel.unsubscribe();
       };
     };
 
