@@ -7,6 +7,7 @@ import {
   type RFResult,
 } from '../utils/randomForest';
 import { supabase } from '../../lib/supabase';
+import { fetchWeatherForDate } from '../../lib/weather';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,11 @@ export interface AttendanceEntry {
   isHolidaySeason: 0 | 1;
   churchEvent: ChurchEvent;
   isFastSunday: 0 | 1;
+  // ── Weather data ──
+  temperatureHigh?: number;
+  temperatureLow?: number;
+  precipitation?: number;
+  snow?: number;
 }
 
 export const CHURCH_EVENTS: ChurchEvent[] = [
@@ -93,6 +99,10 @@ export function toFeatureVector(e: Omit<AttendanceEntry, 'id'>): number[] {
     e.isFastSunday,
     e.month,
     e.week,
+    e.temperatureHigh || 65,
+    e.temperatureLow || 55,
+    e.precipitation || 0,
+    e.snow || 0,
   ];
 }
 
@@ -181,6 +191,39 @@ export function computeNextWeekFeatures(
   const delta1 = lag1 - lag2;
   const delta4 = lag1 - lag4; // best approximation without knowing next attendance
 
+  // Use average weather from recent entries
+  const recentWeather = sorted.slice(-4);
+  const avgTempHigh =
+    recentWeather.length > 0
+      ? Math.round(
+          recentWeather.reduce((sum, e) => sum + (e.temperatureHigh || 65), 0) /
+            recentWeather.length
+        )
+      : 65;
+  const avgTempLow =
+    recentWeather.length > 0
+      ? Math.round(
+          recentWeather.reduce((sum, e) => sum + (e.temperatureLow || 55), 0) /
+            recentWeather.length
+        )
+      : 55;
+  const avgPrecip =
+    recentWeather.length > 0
+      ? Math.round(
+          (recentWeather.reduce((sum, e) => sum + (e.precipitation || 0), 0) /
+            recentWeather.length) *
+            10
+        ) / 10
+      : 0;
+  const avgSnow =
+    recentWeather.length > 0
+      ? Math.round(
+          (recentWeather.reduce((sum, e) => sum + (e.snow || 0), 0) /
+            recentWeather.length) *
+            10
+        ) / 10
+      : 0;
+
   return [
     lag1,
     lag4,
@@ -193,6 +236,10 @@ export function computeNextWeekFeatures(
     nextContext.isFastSunday,
     nextContext.month,
     nextContext.week,
+    avgTempHigh,
+    avgTempLow,
+    avgPrecip,
+    avgSnow,
   ];
 }
 
@@ -399,6 +446,9 @@ export function useAttendanceData() {
     const week = getWeekOfYear(d);
     const lags = computeLagFeatures(sorted, raw.attendance);
 
+    // Fetch weather data automatically
+    const weather = await fetchWeatherForDate(d);
+
     // Insert into Supabase
     const { error } = await supabase
       .from('attendance_entries')
@@ -417,6 +467,10 @@ export function useAttendanceData() {
         is_holiday_season: raw.isHolidaySeason,
         church_event: raw.churchEvent,
         is_fast_sunday: raw.isFastSunday,
+        temperature_high: weather?.temperature_high || 65,
+        temperature_low: weather?.temperature_low || 55,
+        precipitation: weather?.precipitation || 0,
+        snow: weather?.snow || 0,
         created_by: user?.email,
       });
 

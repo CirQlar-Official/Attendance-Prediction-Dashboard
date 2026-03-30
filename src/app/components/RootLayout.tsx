@@ -49,7 +49,7 @@ export function RootLayout() {
   return (
     <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} flex flex-col items-center justify-start h-full w-full`}>
       <Toaster />
-      <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col animate-fadeIn">
         <Outlet context={{ user, darkMode }} />
       </div>
       <BottomNav />

@@ -385,6 +385,67 @@ export function Forecast() {
           })()}
         </div>
 
+        {/* Weather Conditions */}
+        {sorted.length > 0 && (() => {
+          const lastEntry = sorted[sorted.length - 1];
+          const hasWeather = lastEntry.temperatureHigh || lastEntry.precipitation !== undefined;
+          
+          if (!hasWeather) return null;
+
+          return (
+            <div className={`w-full rounded-[15px] border-2 p-[20px] ${
+              darkMode
+                ? 'border-gray-700 bg-gray-800'
+                : 'border-[#eceef2] bg-white'
+            }`}>
+              <p className={`font-['Segoe_UI'] text-[16px] mb-[12px] ${
+                darkMode ? 'text-white' : 'text-black'
+              }`}>
+                Recent Weather
+              </p>
+              <div className="grid grid-cols-2 gap-[12px]">
+                <div>
+                  <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                    🌡️ High
+                  </p>
+                  <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {lastEntry.temperatureHigh || '--'}°
+                  </p>
+                </div>
+                <div>
+                  <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                    ❄️ Low
+                  </p>
+                  <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {lastEntry.temperatureLow || '--'}°
+                  </p>
+                </div>
+                <div>
+                  <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                    🌧️ Rain
+                  </p>
+                  <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {(lastEntry.precipitation || 0).toFixed(1)}mm
+                  </p>
+                </div>
+                <div>
+                  <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                    ❄ Snow
+                  </p>
+                  <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {(lastEntry.snow || 0).toFixed(1)}mm
+                  </p>
+                </div>
+              </div>
+              <p className={`font-['Segoe_UI'] text-[10px] mt-[10px] text-center ${
+                darkMode ? 'text-gray-500' : 'text-[#9ca3af]'
+              }`}>
+                Weather data helps predict attendance
+              </p>
+            </div>
+          );
+        })()}
+
         {/* Recent Attendance */}
         <div className={`w-full rounded-[15px] border-2 p-[20px] mb-[80px] ${
           darkMode 
@@ -443,12 +504,16 @@ export function Forecast() {
         </div>
 
         {/* Footer */}
-        <div className="w-full rounded-[15px] border-2 border-[#eceef2] p-[10px] flex flex-col items-center gap-[6px]">
-          <p className="font-['Segoe_UI'] text-[18px] text-black">CAST</p>
-          <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c]">
-            Church Attendance Statistical Tracker
+        <div className={`w-full rounded-[15px] border-2 p-[10px] flex flex-col items-center gap-[6px] ${
+          darkMode
+            ? 'border-gray-700 bg-gray-800'
+            : 'border-[#eceef2] bg-white'
+        }`}>
+          <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>CAST</p>
+          <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
+            Church Attendance Statistical Tracker & Analyzer
           </p>
-          <p className="font-['Segoe_UI'] text-[10px] text-[#9ca3af]">
+          <p className={`font-['Segoe_UI'] text-[10px] ${darkMode ? 'text-gray-400' : 'text-[#9ca3af]'}`}>
             Random Forest Regression · 80 Trees · 76 Training Samples
           </p>
         </div>

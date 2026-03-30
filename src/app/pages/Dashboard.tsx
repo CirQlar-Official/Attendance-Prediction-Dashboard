@@ -155,31 +155,43 @@ export function Dashboard() {
         </div>
 
         {/* Recent records */}
-        <div className="w-full rounded-[15px] border-2 border-[#eceef2] p-[20px]">
-          <p className="font-['Segoe_UI'] text-[16px] text-black mb-[10px]">
+        <div className={`w-full rounded-[15px] border-2 p-[20px] ${
+          darkMode
+            ? 'border-gray-700 bg-gray-800'
+            : 'border-[#eceef2] bg-white'
+        }`}>
+          <p className={`font-['Segoe_UI'] text-[16px] mb-[10px] ${darkMode ? 'text-white' : 'text-black'}`}>
             Recent Records
           </p>
           {[...sorted].reverse().slice(0, 6).map((entry, idx, arr) => (
             <div
               key={entry.id}
               className={`h-[50px] w-full flex items-center px-[10px] ${
-                idx !== arr.length - 1 ? 'border-b border-[#eceef2]' : ''
+                idx !== arr.length - 1 ? `border-b ${darkMode ? 'border-gray-700' : 'border-[#eceef2]'}` : ''
               }`}
             >
-              <p className="flex-1 font-['Segoe_UI'] text-[14px] text-black">
+              <p className={`flex-1 font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-gray-300' : 'text-black'}`}>
                 {format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}
               </p>
               {entry.churchEvent !== 'None' && (
-                <span className="text-[11px] bg-[#eceef2] text-[#4c4c4c] rounded px-2 py-0.5 mr-2">
+                <span className={`text-[11px] rounded px-2 py-0.5 mr-2 ${
+                  darkMode
+                    ? 'bg-gray-700 text-gray-300'
+                    : 'bg-[#eceef2] text-[#4c4c4c]'
+                }`}>
                   {entry.churchEvent}
                 </span>
               )}
               {entry.isFastSunday === 1 && (
-                <span className="text-[11px] bg-[#000124] text-white rounded px-2 py-0.5 mr-2">
+                <span className={`text-[11px] rounded px-2 py-0.5 mr-2 ${
+                  darkMode
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-[#000124] text-white'
+                }`}>
                   Fast
                 </span>
               )}
-              <p className="font-['Segoe_UI'] text-[16px] text-black">
+              <p className={`font-['Segoe_UI'] text-[16px] ${darkMode ? 'text-white' : 'text-black'}`}>
                 {entry.attendance}
               </p>
             </div>
