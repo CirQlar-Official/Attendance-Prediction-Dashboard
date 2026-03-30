@@ -2,7 +2,11 @@ import { Link, useLocation } from 'react-router';
 import { Home, Plus, TrendingUp } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
 
-export function BottomNav() {
+interface BottomNavProps {
+  isAdmin: boolean;
+}
+
+export function BottomNav({ isAdmin }: BottomNavProps) {
   const location = useLocation();
   const { darkMode } = useDarkMode();
 
@@ -36,26 +40,28 @@ export function BottomNav() {
           </span>
         </Link>
 
-        <Link 
-          to="/add-data" 
-          className={`flex flex-col items-center justify-center gap-[5px] px-[5px] py-[4px] rounded-[5px] h-full ${
-            isActive('/add-data')
-              ? darkMode ? 'bg-gray-700' : 'bg-[#e9ebef]'
-              : ''
-          }`}
-        >
-          <Plus className={`size-5 ${isActive('/add-data')
-            ? darkMode ? 'text-blue-400' : 'text-black'
-            : darkMode ? 'text-gray-400' : 'text-[#9f9f9f]'
-          }`} strokeWidth={1.5} />
-          <span className={`text-[14px] font-['Segoe_UI'] ${
-            isActive('/add-data')
+        {isAdmin && (
+          <Link 
+            to="/add-data" 
+            className={`flex flex-col items-center justify-center gap-[5px] px-[5px] py-[4px] rounded-[5px] h-full ${
+              isActive('/add-data')
+                ? darkMode ? 'bg-gray-700' : 'bg-[#e9ebef]'
+                : ''
+            }`}
+          >
+            <Plus className={`size-5 ${isActive('/add-data')
               ? darkMode ? 'text-blue-400' : 'text-black'
               : darkMode ? 'text-gray-400' : 'text-[#9f9f9f]'
-          }`}>
-            Add Data
-          </span>
-        </Link>
+            }`} strokeWidth={1.5} />
+            <span className={`text-[14px] font-['Segoe_UI'] ${
+              isActive('/add-data')
+                ? darkMode ? 'text-blue-400' : 'text-black'
+                : darkMode ? 'text-gray-400' : 'text-[#9f9f9f]'
+            }`}>
+              Add Data
+            </span>
+          </Link>
+        )}
 
         <Link 
           to="/forecast" 
@@ -73,7 +79,7 @@ export function BottomNav() {
             isActive('/forecast')
               ? darkMode ? 'text-blue-400' : 'text-black'
               : darkMode ? 'text-gray-400' : 'text-[#9f9f9f]'
-          }`}>
+            }`}>
             Forecast
           </span>
         </Link>

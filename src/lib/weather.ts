@@ -1,49 +1,49 @@
 /**
  * Weather data fetching utility
- * Uses OpenWeatherMap API to get weather data for a given location and date
+ * Uses Open-Meteo API to get weather data for the current day
  */
 
-const OPENWEATHER_API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
-// Default to church location - update with actual coordinates
-const DEFAULT_LAT = 40.7128; // Latitude
-const DEFAULT_LON = -74.0060; // Longitude
+const DEFAULT_LAT = 39.852285881165265;
+const DEFAULT_LON = -86.33698522806094;
 
 export interface WeatherData {
-  temperature_high: number;
-  temperature_low: number;
-  precipitation: number; // in mm
-  snow: number; // in mm
+  low_temp: number;
+  high_temp: number;
+  rainfall: number;
+  snowfall: number;
 }
 
 export async function fetchWeatherForDate(date: Date): Promise<WeatherData | null> {
-  if (!OPENWEATHER_API_KEY) {
-    console.warn('OpenWeatherMap API key not configured');
-    return null;
-  }
-
   try {
-    // Get current weather (or forecast if available)
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${DEFAULT_LAT}&lon=${DEFAULT_LON}&units=metric&appid=${OPENWEATHER_API_KEY}`;
-    
+    const url =
+      `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${DEFAULT_LAT}` +
+      `&longitude=${DEFAULT_LON}` +
+      `&daily=temperature_2m_max,temperature_2m_min,rain_sum,snowfall_sum` +
+      `&timezone=America/New_York` +
+      `&temperature_unit=fahrenheit`;
+
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Weather API error: ${response.statusText}`);
-    
+
     const data = await response.json();
-    
+    const daily = data.daily;
+
+    if (!daily?.time?.length) throw new Error("No daily weather data returned");
+
     return {
-      temperature_high: Math.round(data.main.temp_max),
-      temperature_low: Math.round(data.main.temp_min),
-      precipitation: data.rain?.['1h'] || 0,
-      snow: data.snow?.['1h'] || 0,
+      high_temp: Math.round(daily.temperature_2m_max[0]),
+      low_temp: Math.round(daily.temperature_2m_min[0]),
+      rainfall: daily.rain_sum[0] ?? 0,
+      snowfall: daily.snowfall_sum[0] ?? 0,
     };
   } catch (error) {
-    console.error('Error fetching weather data:', error);
-    // Return neutral default values instead of failing
+    console.error("Error fetching weather data:", error);
     return {
-      temperature_high: 65,
-      temperature_low: 55,
-      precipitation: 0,
-      snow: 0,
+      high_temp: 65,
+      low_temp: 55,
+      rainfall: 0,
+      snowfall: 0,
     };
   }
 }
@@ -56,19 +56,17 @@ export function weatherToFeatures(weather: WeatherData | null) {
     return {
       temp_high: 0,
       temp_low: 0,
-      precipitation: 0,
-      snow: 0,
+      rainfall: 0,
+      snowfall: 0,
       is_rainy: 0,
       is_snowy: 0,
     };
   }
 
   return {
-    temp_high: weather.temperature_high,
-    temp_low: weather.temperature_low,
-    precipitation: weather.precipitation,
-    snow: weather.snow,
-    is_rainy: weather.precipitation > 0 ? 1 : 0,
-    is_snowy: weather.snow > 0 ? 1 : 0,
+    low_temp: weather.low_temp,
+  high_temp: weather.high_temp,
+  rainfall: weather.rainfall,
+  snowfall: weather.snowfall
   };
 }

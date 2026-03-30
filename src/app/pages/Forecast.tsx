@@ -388,7 +388,7 @@ export function Forecast() {
         {/* Weather Conditions */}
         {sorted.length > 0 && (() => {
           const lastEntry = sorted[sorted.length - 1];
-          const hasWeather = lastEntry.temperatureHigh || lastEntry.precipitation !== undefined;
+          const hasWeather = lastEntry.high_temp || lastEntry.rainfall !== undefined;
           
           if (!hasWeather) return null;
 
@@ -409,7 +409,7 @@ export function Forecast() {
                     🌡️ High
                   </p>
                   <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                    {lastEntry.temperatureHigh || '--'}°
+                    {lastEntry.high_temp || '--'}°
                   </p>
                 </div>
                 <div>
@@ -417,7 +417,7 @@ export function Forecast() {
                     ❄️ Low
                   </p>
                   <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                    {lastEntry.temperatureLow || '--'}°
+                    {lastEntry.low_temp || '--'}°
                   </p>
                 </div>
                 <div>
@@ -425,7 +425,7 @@ export function Forecast() {
                     🌧️ Rain
                   </p>
                   <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                    {(lastEntry.precipitation || 0).toFixed(1)}mm
+                    {(lastEntry.rainfall || 0).toFixed(1)}mm
                   </p>
                 </div>
                 <div>
@@ -433,7 +433,7 @@ export function Forecast() {
                     ❄ Snow
                   </p>
                   <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                    {(lastEntry.snow || 0).toFixed(1)}mm
+                    {(lastEntry.snowfall || 0).toFixed(1)}mm
                   </p>
                 </div>
               </div>

@@ -30,3 +30,12 @@ export async function getCurrentUser() {
   const { data } = await supabase.auth.getUser();
   return data.user;
 }
+
+export async function checkIsAdmin(userId: string) {
+  const { data } = await supabase
+    .from('admins')
+    .select('user_id')
+    .eq('user_id', userId)
+    .single();
+  return !!data;
+}

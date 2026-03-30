@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router';
 import { useState, useEffect } from 'react';
-import { getCurrentUser } from '../../lib/supabase';
+import { getCurrentUser, checkIsAdmin } from '../../lib/supabase';
 import { useDarkMode } from '../context/DarkModeContext';
 import { BottomNav } from './BottomNav';
 import { Auth } from './Auth';
@@ -8,6 +8,7 @@ import { Toaster } from './ui/sonner';
 
 export function RootLayout() {
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const { darkMode } = useDarkMode();
 
@@ -16,6 +17,10 @@ export function RootLayout() {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
+        if (currentUser) {
+          const adminStatus = await checkIsAdmin(currentUser.id);
+          setIsAdmin(adminStatus);
+        }
       } catch (error) {
         console.error('Error checking user:', error);
       } finally {
@@ -50,9 +55,9 @@ export function RootLayout() {
     <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} flex flex-col items-center justify-start h-full w-full`}>
       <Toaster />
       <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col animate-fadeIn">
-        <Outlet context={{ user, darkMode }} />
+        <Outlet context={{ user, darkMode, isAdmin }} />
       </div>
-      <BottomNav />
+      <BottomNav isAdmin={isAdmin} />
     </div>
   );
 }
