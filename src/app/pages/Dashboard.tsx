@@ -12,12 +12,26 @@ import {
 import { format } from 'date-fns';
 import { Sun, Moon } from 'lucide-react';
 
+import { useState, useEffect } from 'react';
+
 export function Dashboard() {
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const { sorted, getStats } = useAttendanceData();
   const { darkMode, setDarkMode } = useDarkMode();
   const stats = getStats();
-
-  const chartData = sorted.slice(-10).map(entry => ({
+  
+  const chartData = sorted
+  .slice(isDesktop ? -30 : -10)
+  .map(entry => ({
     date: format(new Date(entry.date + 'T12:00:00'), 'MMM d'),
     attendance: entry.attendance,
   }));
@@ -43,9 +57,7 @@ export function Dashboard() {
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`px-3 py-2 rounded-lg transition ${
-                darkMode
-                  ? 'bg-yellow-500 text-gray-900'
-                  : 'bg-gray-200 text-gray-700'
+                darkMode ? 'bg-white text-gray-900' : 'bg-gray-200 text-gray-700'
               }`}
             >
               {darkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
@@ -55,10 +67,13 @@ export function Dashboard() {
 
         {/* Current Attendance */}
         <div className={`h-[150px] w-full rounded-[15px] p-[30px] flex flex-col items-center justify-between text-center ${
-          darkMode
-            ? 'bg-gradient-to-br from-blue-900 to-blue-800 text-white'
-            : 'bg-[#000124] text-white'
-        }`}>
+          'bg-gray-800 text-white' 
+        }`} style={{
+          background: darkMode
+            ? 'radial-gradient(ellipse at top, rgba(2,158,255,0.25) 0%, rgba(10,15,40,1) 60%), linear-gradient(180deg, rgba(10,15,40,1) 0%, rgba(5,8,25,1) 100%)'
+            : 'radial-gradient(ellipse at top, rgba(2,158,255,0.35) 0%, rgba(0,1,50,1) 60%), linear-gradient(180deg, rgba(0,1,50,1) 0%, rgba(0,20,70,1) 100%)',
+          boxShadow: '0 0 30px rgba(2,158,255,0.15)',
+        }}>
           <p className="font-['Segoe_UI'] font-semibold text-[20px]">
             Most Recent Attendance
           </p>
@@ -116,8 +131,10 @@ export function Dashboard() {
             : 'border-[#eceef2] bg-white'
         }`}>
           <p className={`font-['Segoe_UI'] text-[16px] mb-[15px] ${darkMode ? 'text-white' : 'text-black'}`}>
-            Attendance Trend (Last 10 Sundays)
+            Attendance Trend
           </p>
+          
+          
           <ResponsiveContainer width="100%" height="85%">
             <LineChart data={chartData}>
               <CartesianGrid 

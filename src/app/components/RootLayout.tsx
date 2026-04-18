@@ -1,10 +1,17 @@
 import { Outlet } from 'react-router';
+
 import { useState, useEffect } from 'react';
+
 import { getCurrentUser, checkIsAdmin } from '../../lib/supabase';
+
 import { useDarkMode } from '../context/DarkModeContext';
+
 import { BottomNav } from './BottomNav';
+
 import { Auth } from './Auth';
+
 import { Toaster } from './ui/sonner';
+
 
 export function RootLayout() {
   const [user, setUser] = useState<any>(null);
@@ -52,12 +59,14 @@ export function RootLayout() {
   }
 
   return (
-    <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} flex flex-col items-center justify-start h-full w-full`}>
+    // On desktop (md+): flex-row so sidebar and content sit side by side.
+    // On mobile: flex-col, BottomNav is fixed so it doesn't affect flow.
+    <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} flex flex-col md:flex-row h-full w-full`}>
       <Toaster />
-      <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col animate-fadeIn">
+      <BottomNav isAdmin={isAdmin} />
+      <div className="flex-1 min-h-0 min-w-0 overflow-auto flex flex-col animate-fadeIn pb-[70px] md:pb-0">
         <Outlet context={{ user, darkMode, isAdmin }} />
       </div>
-      <BottomNav isAdmin={isAdmin} />
     </div>
   );
 }

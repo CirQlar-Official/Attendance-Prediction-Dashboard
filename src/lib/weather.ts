@@ -13,7 +13,8 @@ export interface WeatherData {
   snowfall: number;
 }
 
-export async function fetchWeatherForDate(date: Date): Promise<WeatherData | null> {
+/* Fetch weather data for a specific date */
+export async function fetchWeatherForDate(d: Date): Promise<WeatherData | null> {
   try {
     const url =
       `https://api.open-meteo.com/v1/forecast` +

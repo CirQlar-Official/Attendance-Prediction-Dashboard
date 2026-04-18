@@ -22,6 +22,10 @@ import {
   Sun,
   Check,
   X,
+  ThermometerSun,
+  ThermometerSnowflake,
+  Droplets,
+  Snowflake,
 } from 'lucide-react';
 import {
   BarChart,
@@ -126,9 +130,7 @@ export function Forecast() {
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`px-3 py-2 rounded-lg transition ${
-                darkMode
-                  ? 'bg-yellow-500 text-gray-900'
-                  : 'bg-gray-200 text-gray-700'
+                darkMode ? 'bg-white text-gray-900' : 'bg-gray-200 text-gray-700'
               }`}
             >
               {darkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
@@ -143,11 +145,12 @@ export function Forecast() {
         {/* Prediction Card */}
         <div
           className="w-full rounded-[15px] p-[30px] flex flex-col items-center justify-between border-2 border-[#029eff] gap-4"
-          style={{
-            background: darkMode
-              ? 'linear-gradient(135deg, rgba(20,30,60,0.95) 0%, rgba(10,40,80,0.95) 100%)'
-              : 'linear-gradient(135deg, rgba(0,1,36,0.92) 0%, rgba(0,60,120,0.88) 100%)',
-          }}
+style={{
+  background: darkMode
+    ? 'radial-gradient(ellipse at top, rgba(2,158,255,0.25) 0%, rgba(10,15,40,1) 60%), linear-gradient(180deg, rgba(10,15,40,1) 0%, rgba(5,8,25,1) 100%)'
+    : 'radial-gradient(ellipse at top, rgba(2,158,255,0.35) 0%, rgba(0,1,50,1) 60%), linear-gradient(180deg, rgba(0,1,50,1) 0%, rgba(0,20,70,1) 100%)',
+  boxShadow: '0 0 30px rgba(2,158,255,0.15)',
+}}
         >
           <p className="font-['Segoe_UI'] font-semibold text-[18px] text-white">
             RF Model Prediction
@@ -405,32 +408,33 @@ export function Forecast() {
               </p>
               <div className="grid grid-cols-2 gap-[12px]">
                 <div>
-                  <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
-                    🌡️ High
+                
+                  <p className={`font-['Segoe_UI'] w-fit text-[12px] flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                    <ThermometerSun color="#ff7a38" />️ High
                   </p>
                   <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
                     {lastEntry.high_temp || '--'}°
                   </p>
                 </div>
                 <div>
-                  <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
-                    ❄️ Low
+                  <p className={`font-['Segoe_UI'] w-fit text-[12px] flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                    <ThermometerSnowflake color="#00C0E8" /> Low
                   </p>
                   <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
                     {lastEntry.low_temp || '--'}°
                   </p>
                 </div>
                 <div>
-                  <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
-                    🌧️ Rain
+                  <p className={`font-['Segoe_UI'] w-fit text-[12px] flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                    <Droplets color="#00C0E8" /> Rainfall
                   </p>
                   <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
                     {(lastEntry.rainfall || 0).toFixed(1)}mm
                   </p>
                 </div>
                 <div>
-                  <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
-                    ❄ Snow
+                  <p className={`font-['Segoe_UI'] w-fit text-[12px] flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                    {darkMode ? <Snowflake color="#CCC" /> : <Snowflake color="#00C0E8" />}Snowfall
                   </p>
                   <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
                     {(lastEntry.snowfall || 0).toFixed(1)}mm
@@ -511,10 +515,11 @@ export function Forecast() {
         }`}>
           <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>CAST</p>
           <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
-            Church Attendance Statistical Tracker & Analyzer
+            Church Attendance Statistical Tracker
           </p>
+          {/* grabs the length of the dataset to show how many samples the model trained on */}
           <p className={`font-['Segoe_UI'] text-[10px] ${darkMode ? 'text-gray-400' : 'text-[#9ca3af]'}`}>
-            Random Forest Regression · 80 Trees · 76 Training Samples
+            Random Forest Regression · 80 Trees · {sorted.length} Training Samples
           </p>
         </div>
       </div>

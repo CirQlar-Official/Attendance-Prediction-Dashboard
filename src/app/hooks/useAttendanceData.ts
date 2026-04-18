@@ -16,6 +16,7 @@ export type ChurchEvent =
   | 'Mothers Day'
   | 'Fathers Day'
   | 'Christmas'
+  | 'Primary Program'
   | 'Other';
 
 export interface AttendanceEntry {
@@ -46,6 +47,7 @@ export const CHURCH_EVENTS: ChurchEvent[] = [
   'Palm Sunday',
   'Mothers Day',
   'Fathers Day',
+  'Primary Program',
   'Christmas',
   'Other',
 ];
@@ -72,10 +74,11 @@ function encodeChurchEvent(ev: ChurchEvent): number {
   const map: Record<ChurchEvent, number> = {
     None: 0,
     Easter: 4,
-    'Palm Sunday': 2,
-    'Mothers Day': 2,
-    'Fathers Day': 2,
-    Christmas: 3,
+    'Palm Sunday': 3,
+    'Mothers Day': 5,
+    'Fathers Day': 6,
+    'Primary Program': 7,
+    Christmas: 2,
     Other: 1,
   };
   return map[ev] ?? 0;
@@ -272,6 +275,7 @@ async function loadEntriesFromSupabase(): Promise<AttendanceEntry[]> {
 export function useAttendanceData() {
   const [entries, setEntries] = useState<AttendanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  loading;
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -341,6 +345,38 @@ export function useAttendanceData() {
     const y = sorted.map(e => e.attendance);
     return trainRandomForest(X, y);
   }, [sorted]);
+
+  const deleteEntry = async (id: string) => {
+    setEntries(prev => prev.filter(e => e.id !== id));
+    const { error } = await supabase
+      .from('attendance_entries')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.error('Error deleting entry:', error);
+      const restored = await loadEntriesFromSupabase();
+      setEntries(restored);
+    }
+  };
+
+  const updateEntry = async (id: string, updates: Partial<AttendanceEntry>) => {
+    setEntries(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    const { error } = await supabase
+      .from('attendance_entries')
+      .update({
+        attendance: updates.attendance,
+        church_event: updates.churchEvent,
+        is_fast_sunday: updates.isFastSunday,
+        is_summer: updates.isSummer,
+        is_holiday_season: updates.isHolidaySeason,
+      })
+      .eq('id', id);
+    if (error) {
+      console.error('Error updating entry:', error);
+      const restored = await loadEntriesFromSupabase();
+      setEntries(restored);
+    }
+  };
 
   const addEntry = async (raw: {
     date: string;
@@ -447,15 +483,11 @@ export function useAttendanceData() {
     return { ...result, featureImps };
   };
 
-  return {
-    entries,
-    sorted,
-    forest,
-    addEntry,
-    getStats,
-    predictNextAttendance,
-    computeLagFeatures,
-    loading,
-    user,
-  };
+return { 
+  sorted, 
+  addEntry, 
+  deleteEntry, 
+  updateEntry, 
+  getStats, 
+  predictNextAttendance };
 }
