@@ -1,4 +1,4 @@
-import { useAttendanceData } from '../hooks/useAttendanceData';
+import { useAttendanceData, type Group } from '../hooks/useAttendanceData';
 import { useDarkMode } from '../context/DarkModeContext';
 import {
   LineChart,
@@ -11,11 +11,14 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { Sun, Moon } from 'lucide-react';
+import { useOutletContext } from 'react-router';
 
 import { useState, useEffect } from 'react';
 
 export function Dashboard() {
+  const { selectedGroup, isAdmin } = useOutletContext<{ selectedGroup: Group | null; isAdmin: boolean }>();
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+  const { sorted, getStats } = useAttendanceData(selectedGroup?.id ?? null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -25,10 +28,9 @@ export function Dashboard() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const { sorted, getStats } = useAttendanceData();
   const { darkMode, setDarkMode } = useDarkMode();
   const stats = getStats();
-  
+
   const chartData = sorted
   .slice(isDesktop ? -30 : -10)
   .map(entry => ({
@@ -48,20 +50,27 @@ export function Dashboard() {
             <div className="w-8" /> {/* spacer */}
             <div>
               <p className={`font-['Segoe_UI'] font-semibold text-[24px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                Avon 2nd Ward
+                {selectedGroup?.name ?? 'Attendance Group'}
               </p>
               <p className={`font-['Segoe_UI'] text-[16px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
                 {formattedDate}
               </p>
             </div>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`px-3 py-2 rounded-lg transition ${
-                darkMode ? 'bg-white text-gray-900' : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              {darkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
-            </button>
+            <div className="flex flex-col items-end gap-2">
+              {isAdmin && selectedGroup?.joinCode && (
+                <div className={`rounded-full px-3 py-1 text-[12px] font-semibold ${darkMode ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-900'}`}>
+                  Join code: {selectedGroup.joinCode}
+                </div>
+              )}
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`px-3 py-2 rounded-lg transition ${
+                  darkMode ? 'bg-white text-gray-900' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                {darkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
+              </button>
+            </div>
           </div>
         </div>
 

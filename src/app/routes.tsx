@@ -4,6 +4,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { Forecast } from "./pages/Forecast";
 import { AddData } from "./pages/AddData";
 import { History } from './pages/History';
+import { Members } from './pages/Members';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { isAdmin } = useOutletContext<{ isAdmin: boolean }>();
@@ -23,10 +24,8 @@ export const router = createBrowserRouter([
       { index: true, Component: Dashboard },
       { path: "forecast", Component: Forecast },
       { path: "history", element: <HistoryRoute /> },
-      { 
-        path: "add-data", 
-        element: <AdminRoute><AddData /></AdminRoute>
-      },
+      { path: "add-data", Component: AddData },
+      { path: "members", element: <AdminRoute><Members /></AdminRoute> },
     ],
   },
 ]);

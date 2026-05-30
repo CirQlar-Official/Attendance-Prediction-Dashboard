@@ -1,7 +1,8 @@
 
 import { useState, useMemo } from 'react';
-import { useAttendanceData } from '../hooks/useAttendanceData';
+import { useAttendanceData, type Group } from '../hooks/useAttendanceData';
 import { useDarkMode } from '../context/DarkModeContext';
+import { useOutletContext } from 'react-router';
 import {
   CHURCH_EVENTS,
   autoIsSummer,
@@ -38,7 +39,8 @@ import {
 } from 'recharts';
 
 export function Forecast() {
-  const { sorted, predictNextAttendance } = useAttendanceData();
+  const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
+  const { sorted, predictNextAttendance } = useAttendanceData(selectedGroup?.id ?? null);
   const { darkMode, setDarkMode } = useDarkMode();
 
   // ── Always calculate from TODAY ──────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { useAttendanceData } from '../hooks/useAttendanceData';
+import { useAttendanceData, type Group } from '../hooks/useAttendanceData';
 import { useDarkMode } from '../context/DarkModeContext';
+import { useOutletContext } from 'react-router';
 import {
   CHURCH_EVENTS,
   autoIsSummer,
@@ -29,8 +30,8 @@ interface HistoryProps {
 
 
 export function History({ isAdmin }: HistoryProps) {
-  console.log('History isAdmin:', isAdmin); // ← add this
-  const { sorted, deleteEntry, updateEntry } = useAttendanceData();
+  const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
+  const { sorted, deleteEntry, updateEntry } = useAttendanceData(selectedGroup?.id ?? null);
   const { darkMode, setDarkMode } = useDarkMode();
 
   const [search, setSearch] = useState('');
