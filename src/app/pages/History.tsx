@@ -371,6 +371,13 @@ export function History({ isAdmin }: HistoryProps) {
                           {format(new Date(entry.date + 'T12:00:00'), 'MMMM d, yyyy')}
                         </p>
                         <div className="flex items-center gap-[6px] mt-[2px] flex-wrap">
+                          {entry.createdBy && (
+                            <span className={`font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] ${
+                              darkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              Added by {entry.createdBy.split('@')[0]}
+                            </span>
+                          )}
                           {entry.churchEvent !== 'None' && (
                             <span className={`font-['Segoe_UI'] text-[11px] px-[6px] py-[2px] rounded-[4px] ${
                               darkMode ? 'bg-gray-700 text-gray-300' : 'bg-[#eceef2] text-[#4c4c4c]'
@@ -392,7 +399,26 @@ export function History({ isAdmin }: HistoryProps) {
                               Summer
                             </span>
                           )}
+                          {entry.averagedFrom && entry.averagedFrom.length > 0 && (
+                            <span className={`font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] ${
+                              darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'
+                            }`}>
+                              Averaged
+                            </span>
+                          )}
                         </div>
+                        
+                        {/* Show averaged data breakdown if applicable */}
+                        {entry.averagedFrom && entry.averagedFrom.length > 0 && (
+                          <div className={`mt-[8px] text-[11px] ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <p className="font-semibold mb-[2px]">Averaged from:</p>
+                            {entry.averagedFrom.map((contrib, idx) => (
+                              <p key={idx} className="ml-[4px]">
+                                {contrib.email.split('@')[0]}: {contrib.attendance}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <p className={`font-['Segoe_UI'] text-[20px] font-light shrink-0 ${

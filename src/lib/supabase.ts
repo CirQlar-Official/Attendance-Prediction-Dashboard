@@ -243,3 +243,28 @@ export async function getGroupMembersWithDetails(groupId: string) {
     return [];
   }
 }
+
+export async function getUserEmailsForGroup(groupId: string): Promise<Record<string, string>> {
+  try {
+    const { data, error } = await supabase
+      .from('attendance_entries')
+      .select('created_by')
+      .eq('group_id', groupId)
+      .not('created_by', 'is', null);
+
+    if (error) throw error;
+
+    const emailMap: Record<string, string> = {};
+    if (data) {
+      data.forEach((row: any) => {
+        if (row.created_by) {
+          emailMap[row.created_by] = row.created_by;
+        }
+      });
+    }
+    return emailMap;
+  } catch (error) {
+    console.error('Error getting user emails:', error);
+    return {};
+  }
+}

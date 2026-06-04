@@ -1,4 +1,4 @@
-import { useState, useMemo, type ChangeEvent } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router';
 import { useAttendanceData, type Group } from '../hooks/useAttendanceData';
 import { useDarkMode } from '../context/DarkModeContext';
@@ -17,13 +17,8 @@ import { Info, Sun, Moon } from 'lucide-react';
 export function AddData() {
   const navigate = useNavigate();
   const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
-  const { sorted, addEntry, bulkImportEntries } = useAttendanceData(selectedGroup?.id ?? null);
+  const { sorted, addEntry } = useAttendanceData(selectedGroup?.id ?? null);
   const { darkMode, setDarkMode } = useDarkMode();
-
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [importMessage, setImportMessage] = useState<string | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [isImporting, setIsImporting] = useState(false);
 
   // ── User inputs ─────────────────────────────────────────────────────────────
   const [date, setDate] = useState('');
@@ -91,40 +86,6 @@ export function AddData() {
   };
 
   const handleCancel = () => navigate('/');
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setImportMessage(null);
-    setImportError(null);
-    const file = event.target.files?.[0] ?? null;
-    setCsvFile(file);
-  };
-
-  const handleImport = async () => {
-    if (!csvFile) {
-      setImportError('Choose a CSV file before importing.');
-      return;
-    }
-
-    setIsImporting(true);
-    setImportMessage(null);
-    setImportError(null);
-
-    try {
-      const csvText = await csvFile.text();
-      const importedCount = await bulkImportEntries(csvText);
-      const message = importedCount === 0
-        ? 'No new rows imported (all dates already existed).'
-        : `Imported ${importedCount} rows successfully.`;
-      setImportMessage(message);
-      setCsvFile(null);
-      toast.success(message);
-    } catch (error: any) {
-      setImportError(error?.message || 'CSV import failed.');
-      toast.error(error?.message || 'CSV import failed.');
-    } finally {
-      setIsImporting(false);
-    }
-  };
 
   // ── UI helpers ───────────────────────────────────────────────────────────────
   const Toggle = ({
@@ -408,58 +369,6 @@ export function AddData() {
               ))}
             </div>
           )}
-
-          <div className={`rounded-[12px] border p-[16px] mb-[20px] ${
-            darkMode
-              ? 'border-gray-700 bg-gray-800'
-              : 'border-[#eceef2] bg-white'
-          }`}>
-            <div className="flex items-center justify-between mb-[10px]">
-              <div>
-                <p className={`font-['Segoe_UI'] text-[16px] font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>
-                  Bulk CSV Import
-                </p>
-                <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#6b7280]'}`}>
-                  Select a CSV file containing attendance rows. group_id will be set to the current group.
-                </p>
-              </div>
-            </div>
-
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              onChange={handleFileChange}
-              className={`w-full rounded-[8px] border px-[12px] py-[10px] font-['Segoe_UI'] text-[14px] outline-none ${
-                darkMode
-                  ? 'border-gray-600 bg-gray-700 text-white'
-                  : 'border-[#d9d9d9] bg-white text-black'
-              }`}
-            />
-
-            <div className="mt-[12px] flex flex-col gap-[10px]">
-              <button
-                onClick={handleImport}
-                disabled={isImporting}
-                className={`w-full h-[44px] rounded-[8px] font-semibold text-white ${
-                  darkMode
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-[#000124] hover:bg-[#000814]'
-                } ${isImporting ? 'opacity-70 cursor-not-allowed' : ''}`}
-              >
-                {isImporting ? 'Importing…' : 'Import CSV'}
-              </button>
-              {importMessage && (
-                <p className={`font-['Segoe_UI'] text-[13px] ${darkMode ? 'text-green-300' : 'text-green-600'}`}>
-                  {importMessage}
-                </p>
-              )}
-              {importError && (
-                <p className={`font-['Segoe_UI'] text-[13px] ${darkMode ? 'text-red-300' : 'text-red-600'}`}>
-                  {importError}
-                </p>
-              )}
-            </div>
-          </div>
 
           {/* ── Buttons ── */}
           <div className="w-full flex gap-[10px]">

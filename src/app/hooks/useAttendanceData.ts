@@ -40,6 +40,8 @@ export interface AttendanceEntry {
   rainfall?: number;
   snowfall?: number;
   groupId: string;
+  createdBy?: string;
+  averagedFrom?: Array<{ email: string; attendance: number }>;
 }
 
 export interface Group {
@@ -277,6 +279,8 @@ async function loadEntriesFromSupabase(groupId: string | null): Promise<Attendan
         rainfall: row.rainfall,
         snowfall: row.snowfall,
         groupId: row.group_id,
+        createdBy: row.created_by,
+        averagedFrom: row.averaged_from ? JSON.parse(row.averaged_from) : undefined,
       }));
     }
 
@@ -345,6 +349,8 @@ export function useAttendanceData(groupId: string | null) {
                 rainfall: newEntry.rainfall,
                 snowfall: newEntry.snowfall,
                 groupId: newEntry.group_id,
+                createdBy: newEntry.created_by,
+                averagedFrom: newEntry.averaged_from ? JSON.parse(newEntry.averaged_from) : undefined,
               },
             ]);
           }
@@ -435,30 +441,96 @@ export function useAttendanceData(groupId: string | null) {
 
     const weather = await fetchWeatherForDate(d);
 
+    // Check if an entry already exists for this date
+    const { data: existingEntries, error: queryError } = await supabase
+      .from('attendance_entries')
+      .select('*')
+      .eq('date', raw.date)
+      .eq('group_id', groupId);
+
+    if (queryError) {
+      console.error('Error checking for existing entry:', queryError);
+      throw queryError;
+    }
+
+    let attendanceToStore = raw.attendance;
+    let averagedFrom: Array<{ email: string; attendance: number }> | undefined = undefined;
+    let entryIdToReplace: string | null = null;
+
+    // If entry exists, average the data
+    if (existingEntries && existingEntries.length > 0) {
+      const existing = existingEntries[0];
+      entryIdToReplace = existing.id;
+
+      // Build the averaged_from array
+      const contributors: Array<{ email: string; attendance: number }> = [];
+
+      // Add existing contributors
+      if (existing.averaged_from) {
+        try {
+          const parsed = JSON.parse(existing.averaged_from);
+          contributors.push(...parsed);
+        } catch (e) {
+          console.error('Failed to parse existing averaged_from:', e);
+        }
+      } else if (existing.created_by) {
+        contributors.push({ email: existing.created_by, attendance: existing.attendance });
+      }
+
+      // Add the new contributor
+      if (user?.email) {
+        contributors.push({ email: user.email, attendance: raw.attendance });
+      }
+
+      // Calculate average
+      const totalAttendance = contributors.reduce((sum, c) => sum + c.attendance, 0);
+      attendanceToStore = Math.round(totalAttendance / contributors.length);
+      averagedFrom = contributors;
+    }
+
+    const insertData: any = {
+      date: raw.date,
+      attendance: attendanceToStore,
+      year,
+      month,
+      week,
+      lag1: lags.lag1,
+      lag4: lags.lag4,
+      roll4: lags.roll4,
+      delta1: lags.delta1,
+      delta4: lags.delta4,
+      is_summer: raw.isSummer,
+      is_holiday_season: raw.isHolidaySeason,
+      church_event: raw.churchEvent,
+      is_fast_sunday: raw.isFastSunday,
+      high_temp: weather?.high_temp || 65,
+      low_temp: weather?.low_temp || 55,
+      rainfall: weather?.rainfall || 0,
+      snowfall: weather?.snowfall || 0,
+      created_by: user?.email,
+      group_id: groupId,
+    };
+
+    if (averagedFrom) {
+      insertData.averaged_from = JSON.stringify(averagedFrom);
+    }
+
+    // If replacing, delete the old entry first
+    if (entryIdToReplace) {
+      const { error: deleteError } = await supabase
+        .from('attendance_entries')
+        .delete()
+        .eq('id', entryIdToReplace);
+
+      if (deleteError) {
+        console.error('Error deleting old entry:', deleteError);
+        throw deleteError;
+      }
+    }
+
     const { error } = await supabase
       .from('attendance_entries')
-      .insert({
-        date: raw.date,
-        attendance: raw.attendance,
-        year,
-        month,
-        week,
-        lag1: lags.lag1,
-        lag4: lags.lag4,
-        roll4: lags.roll4,
-        delta1: lags.delta1,
-        delta4: lags.delta4,
-        is_summer: raw.isSummer,
-        is_holiday_season: raw.isHolidaySeason,
-        church_event: raw.churchEvent,
-        is_fast_sunday: raw.isFastSunday,
-        high_temp: weather?.high_temp || 65,
-        low_temp: weather?.low_temp || 55,
-        rainfall: weather?.rainfall || 0,
-        snowfall: weather?.snowfall || 0,
-        created_by: user?.email,
-        group_id: groupId,
-      });
+      .insert(insertData);
 
     if (error) {
       console.error('Error adding entry:', error);
@@ -466,208 +538,6 @@ export function useAttendanceData(groupId: string | null) {
     }
   };
 
-  const bulkImportEntries = async (csvText: string) => {
-    if (!groupId) {
-      throw new Error('No group selected. Please join a group before importing CSV.');
-    }
-
-    const normalizeKey = (key: string) =>
-      key.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-
-    const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
-    if (lines.length <= 1) {
-      throw new Error('CSV must contain a header row and at least one data row.');
-    }
-
-    const headers = lines[0].split(',').map(normalizeKey);
-    const combinedHistory: AttendanceEntry[] = [...sorted];
-    const parsedRows: any[] = [];
-
-    for (const rowText of lines.slice(1)) {
-      const values = rowText.split(',').map(value => value.trim());
-      if (values.every(value => value === '')) continue;
-
-      const record: Record<string, string> = {};
-      headers.forEach((key, index) => {
-        record[key] = values[index] ?? '';
-      });
-
-      const dateString = record.date || record['date'];
-      if (!dateString) {
-        throw new Error('CSV row missing a date value.');
-      }
-
-      const date = new Date(dateString + 'T12:00:00');
-      if (Number.isNaN(date.getTime())) {
-        throw new Error(`Invalid date value in CSV: ${dateString}`);
-      }
-
-      const attendance = parseInt(record.attendance || '', 10);
-      if (Number.isNaN(attendance)) {
-        throw new Error(`Invalid attendance value for date ${dateString}.`);
-      }
-
-      const year = parseInt(record.year || '', 10) || date.getFullYear();
-      const month = parseInt(record.month || '', 10) || date.getMonth() + 1;
-      const week = parseInt(record.week || '', 10) || getWeekOfYear(date);
-      const isSummer = record.is_summer || record.isSummer
-        ? (parseInt(record.is_summer || record.isSummer || '0', 10) === 1 ? 1 : 0)
-        : autoIsSummer(month);
-      const isHolidaySeason = record.is_holiday_season || record.isHolidaySeason
-        ? (parseInt(record.is_holiday_season || record.isHolidaySeason || '0', 10) === 1 ? 1 : 0)
-        : autoIsHoliday(month);
-      const churchEvent = (record.church_event || record.churchEvent || 'None') as ChurchEvent;
-      const isFastSunday = record.is_fast_sunday || record.isFastSunday
-        ? (parseInt(record.is_fast_sunday || record.isFastSunday || '0', 10) === 1 ? 1 : 0)
-        : isFastSundayDate(date);
-
-      const lag1 = record.lag1
-        ? parseInt(record.lag1, 10)
-        : combinedHistory.length >= 1
-        ? combinedHistory[combinedHistory.length - 1].attendance
-        : 0;
-      const lag4 = record.lag4
-        ? parseInt(record.lag4, 10)
-        : combinedHistory.length >= 4
-        ? combinedHistory[combinedHistory.length - 4].attendance
-        : 0;
-
-      const last4 = combinedHistory.slice(-4).map(e => e.attendance);
-      const roll4 = record.roll4
-        ? Number(record.roll4)
-        : last4.length > 0
-        ? Math.round((last4.reduce((sum, value) => sum + value, 0) / last4.length) * 100) / 100
-        : 0;
-
-      const lag2 = combinedHistory.length >= 2 ? combinedHistory[combinedHistory.length - 2].attendance : 0;
-      const delta1 = record.delta1
-        ? parseInt(record.delta1, 10)
-        : lag1 - lag2;
-      const delta4 = record.delta4
-        ? parseInt(record.delta4, 10)
-        : attendance - lag4;
-
-      const low_temp = record.low_temp !== undefined && record.low_temp !== ''
-        ? Number(record.low_temp)
-        : record.lowTemp !== undefined && record.lowTemp !== ''
-        ? Number(record.lowTemp)
-        : undefined;
-      const high_temp = record.high_temp !== undefined && record.high_temp !== ''
-        ? Number(record.high_temp)
-        : record.highTemp !== undefined && record.highTemp !== ''
-        ? Number(record.highTemp)
-        : undefined;
-      const rainfall = record.rainfall !== undefined && record.rainfall !== ''
-        ? Number(record.rainfall)
-        : undefined;
-      const snowfall = record.snowfall !== undefined && record.snowfall !== ''
-        ? Number(record.snowfall)
-        : undefined;
-
-      const newRow = {
-        date: dateString,
-        attendance,
-        year,
-        month,
-        week,
-        lag1,
-        lag4,
-        roll4,
-        delta1,
-        delta4,
-        is_summer: isSummer,
-        is_holiday_season: isHolidaySeason,
-        church_event: churchEvent,
-        is_fast_sunday: isFastSunday,
-        low_temp,
-        high_temp,
-        rainfall,
-        snowfall,
-        created_by: user?.email,
-        group_id: groupId,
-      };
-
-      parsedRows.push(newRow);
-      combinedHistory.push({
-        id: `${dateString}-${attendance}`,
-        date: dateString,
-        attendance,
-        year,
-        month,
-        week,
-        lag1,
-        lag4,
-        roll4,
-        delta1,
-        delta4,
-        isSummer,
-        isHolidaySeason,
-        churchEvent,
-        isFastSunday,
-        low_temp,
-        high_temp,
-        rainfall,
-        snowfall,
-        groupId,
-      });
-    }
-
-    const duplicateDates = parsedRows
-      .map(row => row.date)
-      .filter((date, index, dates) => dates.indexOf(date) !== index);
-    if (duplicateDates.length > 0) {
-      const uniqueDuplicates = Array.from(new Set(duplicateDates));
-      throw new Error(
-        `CSV contains duplicate date rows: ${uniqueDuplicates.join(', ')}`
-      );
-    }
-
-    const { data: existingEntries, error: existingError } = await supabase
-      .from('attendance_entries')
-      .select('date')
-      .eq('group_id', groupId);
-
-    if (existingError) {
-      console.error('Error checking existing dates for import:', existingError);
-      throw existingError;
-    }
-
-    const existingDates = new Set(
-      existingEntries?.map(entry => entry.date) ?? []
-    );
-
-    const conflictingDates = parsedRows
-      .filter(row => existingDates.has(row.date))
-      .map(row => row.date);
-
-    const rowsToInsert = parsedRows.filter(row => !existingDates.has(row.date));
-
-    if (conflictingDates.length > 0 && rowsToInsert.length === 0) {
-      const uniqueConflicts = Array.from(new Set(conflictingDates));
-      throw new Error(
-        `All rows already exist: ${uniqueConflicts.join(', ')}`
-      );
-    }
-
-    const chunkSize = 200;
-    for (let i = 0; i < rowsToInsert.length; i += chunkSize) {
-      const chunk = rowsToInsert.slice(i, i + chunkSize);
-      const { error } = await supabase.from('attendance_entries').insert(chunk);
-      if (error) {
-        console.error('Error importing CSV chunk:', error);
-        throw error;
-      }
-    }
-
-    const imported = await loadEntriesFromSupabase(groupId);
-    setEntries(imported);
-    const skipped = conflictingDates.length;
-    const actuallyImported = rowsToInsert.length;
-    if (skipped > 0) {
-      console.warn(`Imported ${actuallyImported} rows (skipped ${skipped} duplicate dates)`);
-    }
-    return actuallyImported;
-  };
 
   const getStats = () => {
     if (sorted.length === 0) return null;
@@ -731,7 +601,6 @@ export function useAttendanceData(groupId: string | null) {
 return { 
   sorted, 
   addEntry, 
-  bulkImportEntries,
   deleteEntry, 
   updateEntry, 
   getStats, 
