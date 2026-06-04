@@ -298,7 +298,6 @@ const tabs = [
         </button>
       </div>
     </div>
-    <div className="h-[30px]" />
   </div>
   );
 }
