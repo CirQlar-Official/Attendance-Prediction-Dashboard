@@ -3,6 +3,7 @@ import { RootLayout } from "./components/RootLayout";
 import { Dashboard } from "./pages/Dashboard";
 import { Forecast } from "./pages/Forecast";
 import { AddData } from "./pages/AddData";
+import { Counter } from "./pages/Counter";
 import { History } from './pages/History';
 import { Members } from './pages/Members';
 
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Dashboard },
       { path: "forecast", Component: Forecast },
+      { path: "counter", Component: Counter },
       { path: "history", element: <HistoryRoute /> },
       { path: "add-data", Component: AddData },
       { path: "members", element: <AdminRoute><Members /></AdminRoute> },

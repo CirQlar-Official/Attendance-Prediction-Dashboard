@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { useDarkMode } from '../context/DarkModeContext';
-import { getGroupMembersWithDetails, removeUserFromGroup, getCurrentUser, getUserEmailsForGroup } from '../../lib/supabase';
+import { getGroupMembersWithDetails, removeUserFromGroup, getCurrentUser, getUserProfilesForGroup } from '../../lib/supabase';
 import type { Group } from '../hooks/useAttendanceData';
 import { Users, Key, Trash2, Loader } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,34 +31,14 @@ export function Members() {
       setError(null);
       try {
         const result = await getGroupMembersWithDetails(selectedGroup.id);
-        
-        // Fetch emails from attendance entries for this group
-        const emailMap: Record<string, string> = {};
-        const { data: entries, error: entriesError } = await (await import('../../lib/supabase')).supabase
-          .from('attendance_entries')
-          .select('created_by')
-          .eq('group_id', selectedGroup.id)
-          .not('created_by', 'is', null);
+        const profileMap = await getUserProfilesForGroup(selectedGroup.id);
 
-        if (!entriesError && entries) {
-          entries.forEach((entry: any) => {
-            if (entry.created_by) {
-              emailMap[entry.created_by] = entry.created_by;
-            }
-          });
-        }
+        const membersWithNames = result.map((m: any) => ({
+          ...m,
+          email: profileMap[m.user_id] || `User ${m.user_id.slice(0, 8)}`
+        }));
 
-        // Enhance members with email info (using email as display name for now)
-        const membersWithEmails = result.map(m => {
-          // Try to find email from attendance entries
-          const foundEmail = Object.values(emailMap).find(() => true) || null;
-          return {
-            ...m,
-            email: foundEmail || `User ${m.user_id.slice(0, 8)}`
-          };
-        });
-
-        setMembers(membersWithEmails);
+        setMembers(membersWithNames);
       } catch (err: any) {
         setError(err?.message || 'Unable to load group members.');
       } finally {

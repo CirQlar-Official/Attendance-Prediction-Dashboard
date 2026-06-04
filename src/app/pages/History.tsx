@@ -23,11 +23,64 @@ import {
   Filter,
 } from 'lucide-react';
 
+// ─── Color utility ────────────────────────────────────────────────────────────
+
+function colorFromName(name: string): {
+  light: { bg: string; text: string };
+  dark: { bg: string; text: string };
+} {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    hash |= 0;
+  }
+
+  const colors: { bg: string; text: string }[] = [
+    { bg: 'bg-purple-100',  text: 'text-purple-700'  },
+    { bg: 'bg-blue-100',    text: 'text-blue-700'    },
+    { bg: 'bg-green-100',   text: 'text-green-700'   },
+    { bg: 'bg-yellow-100',  text: 'text-yellow-700'  },
+    { bg: 'bg-pink-100',    text: 'text-pink-700'    },
+    { bg: 'bg-orange-100',  text: 'text-orange-700'  },
+    { bg: 'bg-teal-100',    text: 'text-teal-700'    },
+    { bg: 'bg-red-100',     text: 'text-red-700'     },
+    { bg: 'bg-indigo-100',  text: 'text-indigo-700'  },
+    { bg: 'bg-cyan-100',    text: 'text-cyan-700'    },
+  ];
+
+  const darkColors: { bg: string; text: string }[] = [
+    { bg: 'bg-purple-900',  text: 'text-purple-300'  },
+    { bg: 'bg-blue-900',    text: 'text-blue-300'    },
+    { bg: 'bg-green-900',   text: 'text-green-300'   },
+    { bg: 'bg-yellow-900',  text: 'text-yellow-300'  },
+    { bg: 'bg-pink-900',    text: 'text-pink-300'    },
+    { bg: 'bg-orange-900',  text: 'text-orange-300'  },
+    { bg: 'bg-teal-900',    text: 'text-teal-300'    },
+    { bg: 'bg-red-900',     text: 'text-red-300'     },
+    { bg: 'bg-indigo-900',  text: 'text-indigo-300'  },
+    { bg: 'bg-cyan-900',    text: 'text-cyan-300'    },
+  ];
+
+  const index = Math.abs(hash) % colors.length;
+  return { light: colors[index], dark: darkColors[index] };
+}
+
+// Resolves a raw createdBy string (email or full name) to display name
+function resolveDisplayName(raw: string): { firstName: string; fullKey: string } {
+  if (raw.includes('@')) {
+    // Legacy email — use the part before @
+    const username = raw.split('@')[0];
+    return { firstName: username, fullKey: username };
+  }
+  // Full name — first word only for display, full name for color keying
+  return { firstName: raw.split(' ')[0], fullKey: raw };
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 interface HistoryProps {
   isAdmin: boolean;
 }
-
-
 
 export function History({ isAdmin }: HistoryProps) {
   const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
@@ -371,13 +424,20 @@ export function History({ isAdmin }: HistoryProps) {
                           {format(new Date(entry.date + 'T12:00:00'), 'MMMM d, yyyy')}
                         </p>
                         <div className="flex items-center gap-[6px] mt-[2px] flex-wrap">
-                          {entry.createdBy && (
-                            <span className={`font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] ${
-                              darkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-700'
-                            }`}>
-                              Added by {entry.createdBy.split('@')[0]}
-                            </span>
-                          )}
+
+                          {/* ── Added by badge ── */}
+                          {entry.createdBy && (() => {
+                            const { firstName, fullKey } = resolveDisplayName(entry.createdBy);
+                            const { light, dark } = colorFromName(fullKey);
+                            return (
+                              <span className={`font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] ${
+                                darkMode ? `${dark.bg} ${dark.text}` : `${light.bg} ${light.text}`
+                              }`}>
+                                Added by {firstName}
+                              </span>
+                            );
+                          })()}
+
                           {entry.churchEvent !== 'None' && (
                             <span className={`font-['Segoe_UI'] text-[11px] px-[6px] py-[2px] rounded-[4px] ${
                               darkMode ? 'bg-gray-700 text-gray-300' : 'bg-[#eceef2] text-[#4c4c4c]'
@@ -407,16 +467,25 @@ export function History({ isAdmin }: HistoryProps) {
                             </span>
                           )}
                         </div>
-                        
-                        {/* Show averaged data breakdown if applicable */}
+
+                        {/* ── Averaged breakdown ── */}
                         {entry.averagedFrom && entry.averagedFrom.length > 0 && (
                           <div className={`mt-[8px] text-[11px] ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             <p className="font-semibold mb-[2px]">Averaged from:</p>
-                            {entry.averagedFrom.map((contrib, idx) => (
-                              <p key={idx} className="ml-[4px]">
-                                {contrib.email.split('@')[0]}: {contrib.attendance}
-                              </p>
-                            ))}
+                            {entry.averagedFrom.map((contrib, idx) => {
+                              const { firstName, fullKey } = resolveDisplayName(contrib.email);
+                              const { light, dark } = colorFromName(fullKey);
+                              return (
+                                <p key={idx} className="ml-[4px] flex items-center gap-[4px] mt-[2px]">
+                                  <span className={`px-[5px] py-[1px] rounded-[3px] text-[10px] ${
+                                    darkMode ? `${dark.bg} ${dark.text}` : `${light.bg} ${light.text}`
+                                  }`}>
+                                    {firstName}
+                                  </span>
+                                  <span>{contrib.attendance}</span>
+                                </p>
+                              );
+                            })}
                           </div>
                         )}
                       </div>

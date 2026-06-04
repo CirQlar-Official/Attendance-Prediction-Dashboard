@@ -14,8 +14,8 @@ export async function getSession() {
   return data.session;
 }
 
-export async function signUp(email: string, password: string) {
-  return supabase.auth.signUp({ email, password });
+export async function signUp(email: string, password: string, options?: { full_name?: string }) {
+  return supabase.auth.signUp({ email, password, options: { data: { full_name: options?.full_name } } });
 }
 
 export async function signIn(email: string, password: string) {
@@ -184,7 +184,29 @@ export async function getUserGroup(userId: string) {
   }
 }
 
-export async function joinGroup(userId: string, groupId: string, userEmail: string) {
+export async function getUserProfilesForGroup(groupId: string): Promise<Record<string, string>> {
+  // Get all user_ids in this group
+  const { data: members, error: membersError } = await supabase
+    .from('group_members')
+    .select('user_id')
+    .eq('group_id', groupId);
+
+  if (membersError || !members) return {};
+
+  const userIds = members.map((m) => m.user_id);
+
+  // Pull full_name from user_profiles
+  const { data: profiles, error: profilesError } = await supabase
+    .from('user_profiles')
+    .select('user_id, full_name')
+    .in('user_id', userIds);
+
+  if (profilesError || !profiles) return {};
+
+  return Object.fromEntries(profiles.map((p) => [p.user_id, p.full_name]));
+}
+
+export async function joinGroup(userId: string, groupId: string) {
   try {
     const { error } = await supabase
       .from('group_members')
@@ -267,4 +289,6 @@ export async function getUserEmailsForGroup(groupId: string): Promise<Record<str
     console.error('Error getting user emails:', error);
     return {};
   }
+
+  
 }

@@ -13,6 +13,7 @@ interface AuthProps {
 export function Auth({ user, onAuthChange }: AuthProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState(''); // Added name state
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export function Auth({ user, onAuthChange }: AuthProps) {
 
     try {
       if (isSignUp) {
-        const { error: err } = await signUp(email, password);
+        const { error: err } = await signUp(email, password, { full_name: name });
         if (err) throw err;
         alert('Check your email to confirm signup!');
       } else {
@@ -72,6 +73,16 @@ export function Auth({ user, onAuthChange }: AuthProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Only show Name input field if user is signing up */}
+        {isSignUp && (
+          <Input
+            type="text"
+            placeholder="Full Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required={isSignUp}
+          />
+        )}
         <Input
           type="email"
           placeholder="Email"

@@ -81,6 +81,19 @@ export const FEATURE_NAMES = [
   'Snowfall',
 ];
 
+async function getCurrentUserFullName(): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 'Unknown';
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('full_name')
+    .eq('user_id', user.id)
+    .single();
+
+  return profile?.full_name ?? user.email ?? 'Unknown';
+}
+
 function encodeChurchEvent(ev: ChurchEvent): number {
   const map: Record<ChurchEvent, number> = {
     None: 0,
@@ -478,9 +491,8 @@ export function useAttendanceData(groupId: string | null) {
       }
 
       // Add the new contributor
-      if (user?.email) {
-        contributors.push({ email: user.email, attendance: raw.attendance });
-      }
+      const fullName = await getCurrentUserFullName();
+      contributors.push({ email: fullName, attendance: raw.attendance });
 
       // Calculate average
       const totalAttendance = contributors.reduce((sum, c) => sum + c.attendance, 0);
@@ -507,7 +519,7 @@ export function useAttendanceData(groupId: string | null) {
       low_temp: weather?.low_temp || 55,
       rainfall: weather?.rainfall || 0,
       snowfall: weather?.snowfall || 0,
-      created_by: user?.email,
+      created_by: await getCurrentUserFullName(),
       group_id: groupId,
     };
 

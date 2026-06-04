@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router';
 
-import { Home, Plus, TrendingUp, Menu, X, Clock, Users, LogOut } from 'lucide-react';
+import { Home, Plus, TrendingUp, Menu, X, Clock, Users, LogOut, Zap } from 'lucide-react';
 
 import { useDarkMode } from '../context/DarkModeContext';
 
@@ -32,6 +32,7 @@ export function BottomNav({ isAdmin, onLeaveGroup, selectedGroup }: BottomNavPro
 
 const tabs = [
   { path: '/', icon: Home, label: 'Dashboard', strokeWidth: 1.6 },
+  { path: '/counter', icon: Zap, label: 'Counter', strokeWidth: 1.5 },
   { path: '/add-data', icon: Plus, label: 'Add Data', strokeWidth: 1.5 },
   { path: '/forecast', icon: TrendingUp, label: 'Forecast', strokeWidth: 1.24 },
   { path: '/history', icon: Clock, label: 'History', strokeWidth: 1.5 },
@@ -126,7 +127,17 @@ const tabs = [
             className="flex items-center mb-[20px] px-[10px] min-w-0"
             style={{ justifyContent: sidebarOpen ? 'space-between' : 'center' }}
           >
+            {/*if sidebar is open, show image, otherwise hide */}
             {sidebarOpen && (
+              <img
+                src={'src/app/components/castLogo.png'}
+                alt="CAST Logo"
+                className="h-[30px]"
+              />
+            )}
+            {sidebarOpen && (
+              //show image
+                        
               <p
                 className={`font-['Segoe_UI'] font-semibold text-[16px] whitespace-nowrap
                   ${darkMode ? 'text-white' : 'text-black'}
@@ -229,6 +240,9 @@ const tabs = [
   }
 
   // ── Mobile bottom nav ────────────────────────────────────────────────────────
+  // For mobile, we use a horizontal bottom nav with a sliding pill indicator.
+  // allow for swiping to see all tabs
+
   return (
     <div className={`fixed bottom-0 left-0 right-0 z-50 ${
       darkMode ? 'bg-gray-800 border-t-2 border-gray-700' : 'bg-white border-t-2 border-[#eceef2]'
@@ -243,7 +257,7 @@ const tabs = [
             style={pillTransitionStyle}
           />
         )}
-
+        <div className="flex items-center gap-[4px] overflow-x-auto">
         {tabs.map(({ path, icon: Icon, label, strokeWidth }, i) => (
           <Link
             key={path}
@@ -284,5 +298,7 @@ const tabs = [
         </button>
       </div>
     </div>
+    <div className="h-[30px]" />
+  </div>
   );
 }
