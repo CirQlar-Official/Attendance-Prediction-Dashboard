@@ -13,6 +13,7 @@ import {
 } from '../hooks/useAttendanceData';
 import { toast } from 'sonner';
 import { Info, Sun, Moon, CalendarDays, CirclePlus } from 'lucide-react';
+import { Input } from '../components/ui/input';
 
 export function AddData() {
   const navigate = useNavigate();
@@ -147,11 +148,12 @@ export function AddData() {
                 </label>
                 <div className="relative">
                   <CalendarDays className={`pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  <input
+                  <Input
                     type="date"
                     value={date}
                     onChange={e => handleDateChange(e.target.value)}
-                    className={`w-full rounded-2xl border px-10 py-3 text-sm outline-none transition focus:ring-2 focus:ring-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-900'}`}
+                    className={`px-10 ${darkMode ? 'text-white' : 'text-slate-900'}`}
+                    wrapperClassName="w-full p-0"
                   />
                 </div>
                 {dateInfo && (
@@ -165,13 +167,14 @@ export function AddData() {
                 <label className="mb-2 block text-sm font-semibold">
                   Attendance count <span className="text-rose-500">*</span>
                 </label>
-                <input
+                <Input
                   type="number"
                   value={attendanceStr}
                   onChange={e => setAttendanceStr(e.target.value)}
                   placeholder="e.g. 165"
                   min="0"
-                  className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 text-white placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400'}`}
+                  className={darkMode ? 'text-white placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'}
+                  wrapperClassName="w-full p-0"
                 />
               </div>
 

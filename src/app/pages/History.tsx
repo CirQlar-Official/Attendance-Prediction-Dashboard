@@ -22,6 +22,7 @@ import {
   Calendar,
   Filter,
 } from 'lucide-react';
+import { Input, SmoothInput } from '../components/ui/input';
 
 // ─── Color utility ────────────────────────────────────────────────────────────
 
@@ -338,13 +339,15 @@ export function History({ isAdmin }: HistoryProps) {
             darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-[#f3f4f6] border border-[#eceef2]'
           }`}>
             <Search className={`size-4 shrink-0 ${darkMode ? 'text-gray-400' : 'text-[#9ca3af]'}`} />
-            <input
+            <SmoothInput
+              type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by date, count, or event…"
-              className={`flex-1 bg-transparent outline-none font-['Segoe_UI'] text-[14px] ${
+              className={`flex-1 bg-transparent font-['Segoe_UI'] text-[14px] ${
                 darkMode ? 'text-white placeholder-gray-500' : 'text-black placeholder-[#9ca3af]'
               }`}
+              wrapperClassName="flex-1 border-0 bg-transparent p-0"
             />
             {search && (
               <button onClick={() => setSearch('')}>
@@ -485,13 +488,12 @@ export function History({ isAdmin }: HistoryProps) {
                       </p>
 
                       {/* Attendance input */}
-                      <input
+                      <Input
                         type="number"
                         value={editAttendance}
                         onChange={e => setEditAttendance(e.target.value)}
-                        className={`w-full rounded-[8px] px-[10px] py-[8px] font-['Segoe_UI'] text-[14px] outline-none focus:ring-2 focus:ring-[#029eff] ${
-                          darkMode ? 'bg-gray-700 text-white' : 'bg-[#f3f4f6] text-black'
-                        }`}
+                        className={`font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-white' : 'text-black'}`}
+                        wrapperClassName="w-full p-0"
                       />
 
                       {/* Event select */}

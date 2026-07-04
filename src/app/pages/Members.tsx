@@ -53,7 +53,7 @@ export function Members() {
           };
         });
 
-        setMembers(membersWithNames);
+        setMembers(membersWithEmails);
       } catch (err: any) {
         setError(err?.message || 'Unable to load group members.');
       } finally {

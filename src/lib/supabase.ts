@@ -75,7 +75,6 @@ export async function saveUserProfile(fullName: string, userId?: string, email?:
 
   const currentUser = await getCurrentUser();
   const resolvedUserId = userId ?? currentUser?.id;
-  const resolvedEmail = email ?? currentUser?.email ?? null;
 
   if (!resolvedUserId) return null;
 

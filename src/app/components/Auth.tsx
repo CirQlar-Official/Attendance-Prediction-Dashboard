@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { signUp, signIn, signOut, getCurrentUser, saveUserProfile } from '../../lib/supabase';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
+import { SmoothInput } from './ui/input';
 import { Card } from './ui/card';
 import { Alert } from './ui/alert';
-import { Network, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface AuthProps {
   user: any;
@@ -82,11 +82,11 @@ export function Auth({ user, onAuthChange }: AuthProps) {
         </div>
         <div className="mt-8 flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 text-white shadow-lg shadow-cyan-500/20">
-            <Network className="size-5" />
+            <img src='src/app/context/Logo.png' className="h-auto w-3/4" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">CAST network</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Live attendance insights in one place</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">CAST</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Church Attendance Statistical Tracker</p>
           </div>
         </div>
       </div>
@@ -103,10 +103,10 @@ export function Auth({ user, onAuthChange }: AuthProps) {
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {isSignUp && (
-            <Input type="text" placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+            <SmoothInput type="text" placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
           )}
-          <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <SmoothInput type="text" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <SmoothInput type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-500 hover:to-cyan-400">
             {loading ? 'Loading...' : isSignUp ? 'Create account' : 'Sign in'}
           </Button>

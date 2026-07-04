@@ -1,12 +1,18 @@
-import { useState } from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Alert } from './ui/alert';
+import { Sparkles, ShieldAlert } from 'lucide-react';
+import { cn } from '../../lib/utils';
 import { getGroupByJoinCode, createGroup, joinGroup, deleteCurrentAccount } from '../../lib/supabase';
-import { Network, Sparkles, ShieldAlert } from 'lucide-react';
 import type { Group } from '../hooks/useAttendanceData';
+import { SmoothInput } from './ui/input';
 
+// ==========================================
+// Types & Shared Config for Smooth Inputs
+// ==========================================
 interface GroupSelectorProps {
   user: any;
   isAdmin: boolean;
@@ -14,11 +20,22 @@ interface GroupSelectorProps {
   onAuthChange: (user: any) => void;
 }
 
+const inputWrapperClassName = cn(
+  "bg-muted2 has-[:focus-visible]:outline-muted3 relative w-full rounded-2xl p-4",
+  "has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2",
+);
+
+// ==========================================
+// Helper Utility
+// ==========================================
 const generateJoinCode = () => {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 };
 
+// ==========================================
+// Main Combined Component
+// ==========================================
 export function GroupSelector({ user, isAdmin, onGroupSelected, onAuthChange }: GroupSelectorProps) {
   const [joinCode, setJoinCode] = useState('');
   const [groupName, setGroupName] = useState('');
@@ -46,7 +63,12 @@ export function GroupSelector({ user, isAdmin, onGroupSelected, onAuthChange }: 
         return;
       }
 
-      await joinGroup(user.id, group.id, user.email);
+      if (!group) {
+        setError('The selected group could not be loaded.');
+        return;
+      }
+
+      await joinGroup(user.id, group.id);
       onGroupSelected(group);
     } catch (err: any) {
       setError(err?.message || 'Unable to join the group.');
@@ -66,7 +88,12 @@ export function GroupSelector({ user, isAdmin, onGroupSelected, onAuthChange }: 
       const code = generateJoinCode();
       const group = await createGroup(name, code, user?.id);
 
-      await joinGroup(user.id, group.id, user.email);
+      if (!group) {
+        setError('The newly created group could not be loaded.');
+        return;
+      }
+
+      await joinGroup(user.id, group.id);
       setSuccess(`Group created successfully. Join code: ${group.joinCode}`);
       onGroupSelected(group);
     } catch (err: any) {
@@ -108,13 +135,13 @@ export function GroupSelector({ user, isAdmin, onGroupSelected, onAuthChange }: 
             <div className="rounded-[28px] bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 p-8 text-white">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur">
                 <Sparkles className="size-4" />
-                CAST workspace
+                CAST
               </div>
               <h1 className="mt-6 text-3xl font-semibold tracking-tight sm:text-4xl">Choose your group and get moving.</h1>
-              <p className="mt-3 max-w-lg text-sm leading-6 text-blue-50">Join an existing group with a code or create a new one so your attendance habits stay in sync.</p>
+              <p className="mt-3 max-w-lg text-sm leading-6 text-blue-50">Join an existing group with a code or create a new one.</p>
               <div className="mt-8 flex items-center gap-3 rounded-2xl border border-white/20 bg-white/15 p-4 backdrop-blur">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20">
-                  <Network className="size-5" />
+                  <img src='src/app/context/Logo.png' className="h-auto w-3/4" alt="Logo" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold">Connected groups</p>
@@ -134,7 +161,13 @@ export function GroupSelector({ user, isAdmin, onGroupSelected, onAuthChange }: 
                     <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Enter a join code</h2>
                   </div>
                   <form onSubmit={handleJoin} className="space-y-4">
-                    <Input placeholder="Enter join code" value={joinCode} onChange={e => setJoinCode(e.target.value)} autoCapitalize="characters" />
+                    <SmoothInput
+                      placeholder="Enter join code"
+                      value={joinCode}
+                      onChange={e => setJoinCode(e.target.value)}
+                      autoCapitalize="characters"
+                      wrapperClassName={inputWrapperClassName}
+                    />
                     <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-500 hover:to-cyan-400">
                       {loading ? 'Joining…' : 'Join group'}
                     </Button>
@@ -148,7 +181,12 @@ export function GroupSelector({ user, isAdmin, onGroupSelected, onAuthChange }: 
                       <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Start a new group</h2>
                     </div>
                     <form onSubmit={handleCreate} className="space-y-4">
-                      <Input placeholder="Group name" value={groupName} onChange={e => setGroupName(e.target.value)} />
+                      <SmoothInput
+                        placeholder="Group name"
+                        value={groupName}
+                        onChange={e => setGroupName(e.target.value)}
+                        wrapperClassName={inputWrapperClassName}
+                      />
                       <Button type="submit" variant="secondary" disabled={loading} className="w-full">
                         {loading ? 'Creating…' : 'Create group'}
                       </Button>
