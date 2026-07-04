@@ -27,6 +27,8 @@ import {
   ThermometerSnowflake,
   Droplets,
   Snowflake,
+  Sparkles,
+  Radar,
 } from 'lucide-react';
 import {
   BarChart,
@@ -115,176 +117,84 @@ export function Forecast() {
   const recentEntries = [...sorted].reverse().slice(0, 5);
 
   return (
-    <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      <div className="flex flex-col gap-[20px] items-start p-[10px] w-full pb-[80px]">
-        {/* Header with Dark Mode Toggle */}
-        <div className="flex flex-col items-center justify-center pt-[50px] w-full text-center gap-4">
-          <div className="flex items-center justify-between w-full px-4">
-            <div className="w-8" /> {/* spacer */}
+    <div className={`min-h-full w-full overflow-auto px-3 py-3 pb-24 sm:px-4 sm:py-4 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+      <div className="mx-auto flex max-w-6xl flex-col gap-4">
+        <div className={`app-shell-card-strong overflow-hidden p-4 sm:p-6`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-slate-50/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400">
+                <Sparkles className="size-3.5" />
+                Forecast
+              </div>
+              <div>
+                <p className="text-2xl font-semibold tracking-tight">Attendance forecast</p>
+                <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${darkMode ? 'border-cyan-900/60 bg-cyan-950/50 text-cyan-300' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}>Predicting {format(nextSunday, 'MMM d')}</div>
+              <button onClick={() => setDarkMode(!darkMode)} className={`rounded-2xl p-2.5 transition ${darkMode ? 'bg-slate-800 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                {darkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 p-6 text-white shadow-[0_25px_70px_-30px_rgba(37,99,235,0.65)]">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <p className={`font-['Segoe_UI'] font-semibold text-[24px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                Attendance Forecast
-              </p>
-              <p className={`font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
-                {format(new Date(), 'EEEE, MMMM d, yyyy')}
-              </p>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-50/80">RF model prediction</p>
+              <p className="mt-3 text-5xl font-semibold sm:text-6xl">{prediction}</p>
+              <p className="mt-2 text-sm text-blue-50/90">± {std} range across {result.treePredictions.length} trees</p>
             </div>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`px-3 py-2 rounded-lg transition ${
-                darkMode ? 'bg-white text-gray-900' : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              {darkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
-            </button>
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+              <Radar className="size-6" />
+            </div>
           </div>
-          
-          <p className="font-['Segoe_UI'] text-[12px] text-[#029eff] mt-1">
-            Predicting: {format(nextSunday, 'MMMM d, yyyy')}
-          </p>
-        </div>
-
-        {/* Prediction Card */}
-        <div
-          className="w-full rounded-[15px] p-[30px] flex flex-col items-center justify-between border-2 border-[#029eff] gap-4"
-style={{
-  background: darkMode
-    ? 'radial-gradient(ellipse at top, rgba(2,158,255,0.25) 0%, rgba(10,15,40,1) 60%), linear-gradient(180deg, rgba(10,15,40,1) 0%, rgba(5,8,25,1) 100%)'
-    : 'radial-gradient(ellipse at top, rgba(2,158,255,0.35) 0%, rgba(0,1,50,1) 60%), linear-gradient(180deg, rgba(0,1,50,1) 0%, rgba(0,20,70,1) 100%)',
-  boxShadow: '0 0 30px rgba(2,158,255,0.15)',
-}}
-        >
-          <p className="font-['Segoe_UI'] font-semibold text-[18px] text-white">
-            RF Model Prediction
-          </p>
-
-          <p className="font-['Segoe_UI'] font-light text-[60px] text-white leading-none">
-            {prediction}
-          </p>
-
-          <p className="font-['Segoe_UI'] text-[13px] text-[#aac4ff]">
-            ± {std} range across {result.treePredictions.length} trees
-          </p>
-
-          <div className="w-full flex items-center justify-between">
-            <p
-              className="font-['Segoe_UI'] font-semibold text-[14px]"
-              style={{ color: confidenceColor }}
-            >
-              {confidenceLabel}
-            </p>
-            <div className="flex items-center gap-1">
-              {diff > 0 ? (
-                <ChevronUp className="size-4 text-[#14ae5c]" />
-              ) : diff < 0 ? (
-                <ChevronDown className="size-4 text-[#ff4f4f]" />
-              ) : (
-                <Minus className="size-4 text-white" />
-              )}
-              <p
-                className="font-['Segoe_UI'] text-[14px]"
-                style={{
-                  color: diff > 0 ? '#14ae5c' : diff < 0 ? '#ff4f4f' : 'white',
-                }}
-              >
-                {diff > 0 ? '+' : ''}
-                {diff} ({pctChange}%) vs last week
-              </p>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 ">
+            <p className="text-sm font-semibold bg-white h-fit py-2 px-4 rounded-full" style={{ color: confidenceColor }}>{confidenceLabel}</p>
+            <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-3 py-1 text-sm backdrop-blur">
+              {diff > 0 ? <ChevronUp className="size-4" /> : diff < 0 ? <ChevronDown className="size-4" /> : <Minus className="size-4" />}
+              <span>{diff > 0 ? '+' : ''}{diff} ({pctChange}%) vs last week</span>
             </div>
           </div>
         </div>
 
-        {/* Context Controls */}
-        <div className={`w-full rounded-[15px] border-2 p-[20px] ${
-          darkMode 
-            ? 'border-gray-700 bg-gray-800' 
-            : 'border-[#eceef2] bg-white'
-        }`}>
-          <p className={`font-['Segoe_UI'] text-[16px] mb-[15px] ${
-            darkMode ? 'text-white' : 'text-black'
-          }`}>
-            Adjust Next-Week Context
-          </p>
+        <div className={`app-shell-card p-4 sm:p-5`}>
+          <div className="mb-4">
+            <p className="app-section-label">Context</p>
+            <h2 className="mt-1 text-lg font-semibold">Adjust next-week context</h2>
+          </div>
 
-          {/* Church Event */}
-          <div className="mb-[12px]">
-            <label className={`font-['Segoe_UI'] text-[13px] block mb-[6px] ${
-              darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'
-            }`}>
-              Church Event
-            </label>
-            <select
-              value={churchEvent}
-              onChange={e => setChurchEvent(e.target.value as ChurchEvent)}
-              className={`w-full rounded-[8px] px-[10px] py-[8px] font-['Segoe_UI'] text-[14px] outline-none focus:ring-2 focus:ring-[#029eff] ${
-                darkMode
-                  ? 'bg-gray-700 text-white'
-                  : 'bg-[#eceef2] text-black'
-              }`}
-            >
-              {CHURCH_EVENTS.map(ev => (
-                <option key={ev} value={ev}>
-                  {ev}
-                </option>
-              ))}
+          <div className="mb-4">
+            <label className="mb-2 block text-sm font-semibold">Church event</label>
+            <select value={churchEvent} onChange={e => setChurchEvent(e.target.value as ChurchEvent)} className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-900'}`}>
+              {CHURCH_EVENTS.map(ev => <option key={ev} value={ev}>{ev}</option>)}
             </select>
           </div>
 
-          {/* Toggle flags */}
-          <div className="grid grid-cols-3 gap-[8px]">
+          <div className="grid gap-2 sm:grid-cols-3">
             {[
-              {
-                label: 'Fast Sunday',
-                value: isFastSunday,
-                set: setIsFastSunday,
-              },
-              {
-                label: 'Summer',
-                value: isSummer,
-                set: setIsSummer,
-              },
-              {
-                label: 'Holiday Season',
-                value: isHolidaySeason,
-                set: setIsHolidaySeason,
-              },
+              { label: 'Fast Sunday', value: isFastSunday, set: setIsFastSunday },
+              { label: 'Summer', value: isSummer, set: setIsSummer },
+              { label: 'Holiday', value: isHolidaySeason, set: setIsHolidaySeason },
             ].map(({ label, value, set }) => (
-              <button
-                key={label}
-                onClick={() => set(value === 1 ? 0 : 1)}
-                className={`rounded-[8px] py-[10px] px-[6px] text-center transition-colors flex flex-col items-center justify-center ${
-                  value === 1
-                    ? 'bg-[#029eff] text-white'
-                    : darkMode
-                    ? 'bg-gray-700 text-gray-300'
-                    : 'bg-[#eceef2] text-[#4c4c4c]'
-                }`}
-              >
-                <p className="font-['Segoe_UI'] text-[12px]">{label}</p>
-                {value === 1 ? (
-                  <Check className="size-4 mt-1" />
-                ) : (
-                  <X className="size-4 mt-1" />
-                )}
+              <button key={label} onClick={() => set(value === 1 ? 0 : 1)} className={`flex flex-col items-center justify-center rounded-2xl border px-3 py-3 text-center transition ${value === 1 ? (darkMode ? 'border-cyan-400 bg-cyan-500/15 text-cyan-200' : 'border-blue-200 bg-blue-50 text-blue-700') : (darkMode ? 'border-slate-700 bg-slate-800/70 text-slate-300' : 'border-slate-200 bg-white text-slate-600')}`}>
+                <p className="text-sm font-semibold">{label}</p>
+                {value === 1 ? <Check className="mt-1 size-4" /> : <X className="mt-1 size-4" />}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Feature Importances */}
         {topImps.length > 0 && (
-          <div className={`w-full rounded-[15px] border-2 p-[20px] ${
-            darkMode 
-              ? 'border-gray-700 bg-gray-800' 
-              : 'border-[#eceef2] bg-white'
-          }`}>
-            <div className="flex items-center gap-2 mb-[15px]">
-              <BarChart2 className={`size-4 ${darkMode ? 'text-[#029eff]' : 'text-[#000124]'}`} />
-              <p className={`font-['Segoe_UI'] text-[16px] ${
-                darkMode ? 'text-white' : 'text-black'
-              }`}>
-                Feature Importances
-              </p>
+          <div className={`app-shell-card p-4 sm:p-5`}>
+            <div className="mb-4 flex items-center gap-2">
+              <BarChart2 className={`size-4 ${darkMode ? 'text-cyan-300' : 'text-blue-600'}`} />
+              <div>
+                <p className="app-section-label">Model</p>
+                <h2 className="mt-1 text-lg font-semibold">Feature importances</h2>
+              </div>
             </div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart
@@ -319,25 +229,15 @@ style={{
                 <Bar dataKey="importance" fill={darkMode ? '#029eff' : '#000124'} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
-            <p className={`font-['Segoe_UI'] text-[10px] mt-2 text-center ${
-              darkMode ? 'text-gray-400' : 'text-[#9ca3af]'
-            }`}>
-              Weighted split-frequency across {result.treePredictions.length} RF trees
-            </p>
+            <p className={`mt-2 text-center text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Weighted split-frequency across {result.treePredictions.length} RF trees</p>
           </div>
         )}
 
-        {/* Model Inputs Used */}
-        <div className={`w-full rounded-[15px] border-2 p-[20px] ${
-          darkMode 
-            ? 'border-gray-700 bg-gray-800' 
-            : 'border-[#eceef2] bg-white'
-        }`}>
-          <p className={`font-['Segoe_UI'] text-[16px] mb-[12px] ${
-            darkMode ? 'text-white' : 'text-black'
-          }`}>
-            Model Inputs (Next Week)
-          </p>
+        <div className={`app-shell-card p-4 sm:p-5`}>
+          <div className="mb-4">
+            <p className="app-section-label">Inputs</p>
+            <h2 className="mt-1 text-lg font-semibold">Model inputs for next week</h2>
+          </div>
           {sorted.length >= 1 && (() => {
             const n = sorted.length;
             const lag1 = sorted[n - 1].attendance;
@@ -361,17 +261,8 @@ style={{
             ];
 
             return rows.map(({ label, value, signed }) => (
-              <div
-                key={label}
-                className={`flex items-center justify-between py-[8px] border-b last:border-b-0 ${
-                  darkMode ? 'border-gray-700' : 'border-[#eceef2]'
-                }`}
-              >
-                <p className={`font-['Segoe_UI'] text-[13px] ${
-                  darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'
-                }`}>
-                  {label}
-                </p>
+              <div key={label} className={`flex items-center justify-between rounded-2xl px-3 py-3 ${darkMode ? 'bg-slate-900/60' : 'bg-slate-50/70'}`}>
+                <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{label}</p>
                 <p
                   className={`font-['Segoe_UI'] text-[13px] ${
                     darkMode && !signed ? 'text-white' : !darkMode && !signed ? 'text-black' : ''
@@ -390,7 +281,6 @@ style={{
           })()}
         </div>
 
-        {/* Weather Conditions */}
         {sorted.length > 0 && (() => {
           const lastEntry = sorted[sorted.length - 1];
           const hasWeather = lastEntry.high_temp || lastEntry.rainfall !== undefined;
@@ -398,71 +288,37 @@ style={{
           if (!hasWeather) return null;
 
           return (
-            <div className={`w-full rounded-[15px] border-2 p-[20px] ${
-              darkMode
-                ? 'border-gray-700 bg-gray-800'
-                : 'border-[#eceef2] bg-white'
-            }`}>
-              <p className={`font-['Segoe_UI'] text-[16px] mb-[12px] ${
-                darkMode ? 'text-white' : 'text-black'
-              }`}>
-                Recent Weather
-              </p>
-              <div className="grid grid-cols-2 gap-[12px]">
-                <div>
-                
-                  <p className={`font-['Segoe_UI'] w-fit text-[12px] flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
-                    <ThermometerSun color="#ff7a38" />️ High
-                  </p>
-                  <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                    {lastEntry.high_temp || '--'}°
-                  </p>
-                </div>
-                <div>
-                  <p className={`font-['Segoe_UI'] w-fit text-[12px] flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
-                    <ThermometerSnowflake color="#00C0E8" /> Low
-                  </p>
-                  <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                    {lastEntry.low_temp || '--'}°
-                  </p>
-                </div>
-                <div>
-                  <p className={`font-['Segoe_UI'] w-fit text-[12px] flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
-                    <Droplets color="#00C0E8" /> Rainfall
-                  </p>
-                  <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                    {(lastEntry.rainfall || 0).toFixed(1)}mm
-                  </p>
-                </div>
-                <div>
-                  <p className={`font-['Segoe_UI'] w-fit text-[12px] flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
-                    {darkMode ? <Snowflake color="#CCC" /> : <Snowflake color="#00C0E8" />}Snowfall
-                  </p>
-                  <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                    {(lastEntry.snowfall || 0).toFixed(1)}mm
-                  </p>
-                </div>
+            <div className={`app-shell-card p-4 sm:p-5`}>
+              <div className="mb-4">
+                <p className="app-section-label">Weather</p>
+                <h2 className="mt-1 text-lg font-semibold">Recent weather</h2>
               </div>
-              <p className={`font-['Segoe_UI'] text-[10px] mt-[10px] text-center ${
-                darkMode ? 'text-gray-500' : 'text-[#9ca3af]'
-              }`}>
-                Weather data helps predict attendance
-              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  { label: 'High', value: `${lastEntry.high_temp || '--'}°`, icon: <ThermometerSun color="#ff7a38" /> },
+                  { label: 'Low', value: `${lastEntry.low_temp || '--'}°`, icon: <ThermometerSnowflake color="#00C0E8" /> },
+                  { label: 'Rainfall', value: `${(lastEntry.rainfall || 0).toFixed(1)}mm`, icon: <Droplets color="#00C0E8" /> },
+                  { label: 'Snowfall', value: `${(lastEntry.snowfall || 0).toFixed(1)}mm`, icon: <Snowflake color={darkMode ? '#cbd5e1' : '#00C0E8'} /> },
+                ].map(item => (
+                  <div key={item.label} className={`rounded-2xl border p-3 ${darkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-50/70'}`}>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </div>
+                    <p className={`mt-2 text-lg font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.value}</p>
+                  </div>
+                ))}
+              </div>
+              <p className={`mt-3 text-center text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Weather data helps predict attendance</p>
             </div>
           );
         })()}
 
-        {/* Recent Attendance */}
-        <div className={`w-full rounded-[15px] border-2 p-[20px] mb-[80px] ${
-          darkMode 
-            ? 'border-gray-700 bg-gray-800' 
-            : 'border-[#eceef2] bg-white'
-        }`}>
-          <p className={`font-['Segoe_UI'] text-[16px] mb-[10px] ${
-            darkMode ? 'text-white' : 'text-black'
-          }`}>
-            Recent Attendance
-          </p>
+        <div className={`app-shell-card p-4 sm:p-5`}>
+          <div className="mb-4">
+            <p className="app-section-label">History</p>
+            <h2 className="mt-1 text-lg font-semibold">Recent attendance</h2>
+          </div>
           {recentEntries.map((entry, index) => {
             const trendIcon =
               index < recentEntries.length - 1 ? (
@@ -476,53 +332,22 @@ style={{
               ) : null;
 
             return (
-              <div
-                key={entry.id}
-                className={`flex items-center py-[10px] ${
-                  index !== recentEntries.length - 1
-                    ? darkMode ? 'border-b border-gray-700' : 'border-b border-[#eceef2]'
-                    : ''
-                }`}
-              >
+              <div key={entry.id} className={`flex items-center rounded-2xl px-3 py-3 ${index !== recentEntries.length - 1 ? (darkMode ? 'mb-2 bg-slate-900/60' : 'mb-2 bg-slate-50/70') : ''}`}>
                 <div className="flex-1">
-                  <p className={`font-['Segoe_UI'] text-[14px] ${
-                    darkMode ? 'text-white' : 'text-black'
-                  }`}>
-                    {format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}
-                  </p>
-                  {entry.churchEvent !== 'None' && (
-                    <p className={`font-['Segoe_UI'] text-[11px] ${
-                      darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'
-                    }`}>
-                      {entry.churchEvent}
-                    </p>
-                  )}
+                  <p className="text-sm font-medium">{format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}</p>
+                  {entry.churchEvent !== 'None' && <p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{entry.churchEvent}</p>}
                 </div>
                 {trendIcon && <span className="mr-2">{trendIcon}</span>}
-                <p className={`font-['Segoe_UI'] text-[16px] ${
-                  darkMode ? 'text-white' : 'text-black'
-                }`}>
-                  {entry.attendance}
-                </p>
+                <p className="text-lg font-semibold">{entry.attendance}</p>
               </div>
             );
           })}
         </div>
 
-        {/* Footer */}
-        <div className={`w-full rounded-[15px] border-2 p-[10px] flex flex-col items-center gap-[6px] ${
-          darkMode
-            ? 'border-gray-700 bg-gray-800'
-            : 'border-[#eceef2] bg-white'
-        }`}>
-          <p className={`font-['Segoe_UI'] text-[18px] ${darkMode ? 'text-white' : 'text-black'}`}>CAST</p>
-          <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
-            Church Attendance Statistical Tracker
-          </p>
-          {/* grabs the length of the dataset to show how many samples the model trained on */}
-          <p className={`font-['Segoe_UI'] text-[10px] ${darkMode ? 'text-gray-400' : 'text-[#9ca3af]'}`}>
-            Random Forest Regression · 80 Trees · {sorted.length} Training Samples
-          </p>
+        <div className={`rounded-[24px] border px-4 py-4 text-center ${darkMode ? 'border-slate-800 bg-slate-900/70' : 'border-slate-200 bg-white/70'}`}>
+          <p className="text-lg font-semibold">CAST</p>
+          <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Church Attendance Statistical Tracker</p>
+          <p className={`mt-2 text-[11px] ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Random Forest Regression · 80 Trees · {sorted.length} training samples</p>
         </div>
       </div>
     </div>

@@ -14,8 +14,14 @@ export async function getSession() {
   return data.session;
 }
 
-export async function signUp(email: string, password: string) {
-  return supabase.auth.signUp({ email, password });
+export async function signUp(email: string, password: string, fullName?: string) {
+  return supabase.auth.signUp({
+    email,
+    password,
+    options: fullName?.trim()
+      ? { data: { full_name: fullName.trim() } }
+      : undefined,
+  });
 }
 
 export async function signIn(email: string, password: string) {
@@ -24,6 +30,92 @@ export async function signIn(email: string, password: string) {
 
 export async function signOut() {
   return supabase.auth.signOut();
+}
+
+export async function deleteCurrentAccount(confirmationWord: string) {
+  if (confirmationWord.trim().toUpperCase() !== 'DELETE') {
+    throw new Error('Please type DELETE to confirm account deletion.');
+  }
+
+  const user = await getCurrentUser();
+  if (!user?.id) {
+    throw new Error('You must be signed in to delete your account.');
+  }
+
+  const userId = user.id;
+  const email = user.email ?? null;
+
+  const cleanupTasks = [
+    supabase.from('group_members').delete().eq('user_id', userId),
+    supabase.from('user_profiles').delete().eq('user_id', userId),
+    supabase.from('admins').delete().eq('user_id', userId),
+  ];
+
+  if (email) {
+    cleanupTasks.push(supabase.from('attendance_entries').delete().eq('created_by', email));
+  }
+
+  const results = await Promise.all(cleanupTasks);
+  const firstError = results.find(result => result.error)?.error;
+  if (firstError) {
+    throw firstError;
+  }
+
+  const { error: signOutError } = await supabase.auth.signOut();
+  if (signOutError) {
+    throw signOutError;
+  }
+
+  return true;
+}
+
+export async function saveUserProfile(fullName: string, userId?: string, email?: string | null) {
+  const trimmedName = fullName.trim();
+  if (!trimmedName) return null;
+
+  const currentUser = await getCurrentUser();
+  const resolvedUserId = userId ?? currentUser?.id;
+  const resolvedEmail = email ?? currentUser?.email ?? null;
+
+  if (!resolvedUserId) return null;
+
+  try {
+    const { error } = await supabase
+      .from('user_profiles')
+      .upsert(
+        { user_id: resolvedUserId, full_name: trimmedName },
+        { onConflict: 'user_id' }
+      );
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error saving user profile row:', error);
+  }
+
+  try {
+    await supabase.auth.updateUser({ data: { full_name: trimmedName } });
+  } catch (error) {
+    console.error('Error updating auth metadata:', error);
+  }
+
+  return true;
+}
+
+export async function getProfilesForUserIds(userIds: string[]) {
+  if (!userIds.length) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('user_id, full_name')
+      .in('user_id', userIds);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error loading user profile rows:', error);
+    return [];
+  }
 }
 
 export async function getCurrentUser() {

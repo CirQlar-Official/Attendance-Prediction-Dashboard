@@ -27,7 +27,47 @@ interface HistoryProps {
   isAdmin: boolean;
 }
 
+const PERSON_COLOR_PALETTE = [
+  { light: 'bg-purple-100 text-purple-700 border-purple-200', dark: 'bg-purple-900/70 text-purple-300 border-purple-800' },
+  { light: 'bg-blue-100 text-blue-700 border-blue-200', dark: 'bg-blue-900/70 text-blue-300 border-blue-800' },
+  { light: 'bg-emerald-100 text-emerald-700 border-emerald-200', dark: 'bg-emerald-900/70 text-emerald-300 border-emerald-800' },
+  { light: 'bg-amber-100 text-amber-700 border-amber-200', dark: 'bg-amber-900/70 text-amber-300 border-amber-800' },
+  { light: 'bg-rose-100 text-rose-700 border-rose-200', dark: 'bg-rose-900/70 text-rose-300 border-rose-800' },
+  { light: 'bg-cyan-100 text-cyan-700 border-cyan-200', dark: 'bg-cyan-900/70 text-cyan-300 border-cyan-800' },
+  { light: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200', dark: 'bg-fuchsia-900/70 text-fuchsia-300 border-fuchsia-800' },
+  { light: 'bg-orange-100 text-orange-700 border-orange-200', dark: 'bg-orange-900/70 text-orange-300 border-orange-800' },
+];
 
+const getPersonColorClasses = (person: string, darkMode: boolean) => {
+  const normalized = person.trim().toLowerCase();
+  let hash = 0;
+
+  for (let i = 0; i < normalized.length; i += 1) {
+    hash = (hash * 31 + normalized.charCodeAt(i)) >>> 0;
+  }
+
+  const paletteEntry = PERSON_COLOR_PALETTE[hash % PERSON_COLOR_PALETTE.length];
+  return darkMode ? paletteEntry.dark : paletteEntry.light;
+};
+
+const getChartPoint = (
+  point: { date: string; attendance: number },
+  index: number,
+  chartWidth: number,
+  chartHeight: number,
+  leftPadding: number,
+  rightPadding: number,
+  topPadding: number,
+  bottomPadding: number,
+  chartStep: number,
+  minAttendance: number,
+  chartRange: number
+) => {
+  const x = leftPadding + index * chartStep;
+  const normalized = (point.attendance - minAttendance) / chartRange;
+  const y = chartHeight - bottomPadding - normalized * (chartHeight - topPadding - bottomPadding);
+  return { x, y };
+};
 
 export function History({ isAdmin }: HistoryProps) {
   const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
@@ -106,6 +146,38 @@ export function History({ isAdmin }: HistoryProps) {
     filterFast !== 'All',
   ].filter(Boolean).length;
 
+  const chartData = useMemo(
+    () => sorted.map(entry => ({ date: entry.date, attendance: entry.attendance })),
+    [sorted]
+  );
+
+  const chartWidth = Math.max(720, chartData.length * 48 + 72);
+  const chartHeight = 220;
+  const leftPadding = 28;
+  const rightPadding = 24;
+  const topPadding = 20;
+  const bottomPadding = 28;
+  const chartStep = chartData.length > 1 ? (chartWidth - leftPadding - rightPadding) / (chartData.length - 1) : 0;
+  const maxAttendance = Math.max(...chartData.map(point => point.attendance), 1);
+  const minAttendance = Math.min(...chartData.map(point => point.attendance), 0);
+  const chartRange = Math.max(maxAttendance - minAttendance, 1);
+  const points = chartData.map((point, index) => {
+    const { x, y } = getChartPoint(
+      point,
+      index,
+      chartWidth,
+      chartHeight,
+      leftPadding,
+      rightPadding,
+      topPadding,
+      bottomPadding,
+      chartStep,
+      minAttendance,
+      chartRange
+    );
+    return `${x},${y}`;
+  });
+
   return (
     <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       <div className="flex flex-col gap-[16px] items-start p-[10px] w-full pb-[80px]">
@@ -132,6 +204,78 @@ export function History({ isAdmin }: HistoryProps) {
             </button>
           </div>
         </div>
+
+        {chartData.length > 0 && (
+          <div className={`w-full rounded-[15px] border p-[14px] ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-[#eceef2] bg-white'}`}>
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <p className={`font-['Segoe_UI'] text-[13px] font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>
+                  Attendance trend
+                </p>
+                <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                  Full history · scroll horizontally to explore
+                </p>
+              </div>
+            </div>
+            <div className="overflow-x-auto pb-2">
+              <svg width={chartWidth} height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="min-w-[640px]">
+                {[0, 0.25, 0.5, 0.75, 1].map(step => {
+                  const y = topPadding + (chartHeight - topPadding - bottomPadding) * (1 - step);
+                  return (
+                    <line
+                      key={step}
+                      x1={leftPadding}
+                      x2={chartWidth - rightPadding}
+                      y1={y}
+                      y2={y}
+                      stroke={darkMode ? '#374151' : '#e5e7eb'}
+                      strokeDasharray="4 4"
+                    />
+                  );
+                })}
+                <polyline
+                  fill="none"
+                  stroke={darkMode ? '#60a5fa' : '#029eff'}
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  points={points.join(' ')}
+                />
+                {chartData.map((point, index) => {
+                  const { x, y } = getChartPoint(
+                    point,
+                    index,
+                    chartWidth,
+                    chartHeight,
+                    leftPadding,
+                    rightPadding,
+                    topPadding,
+                    bottomPadding,
+                    chartStep,
+                    minAttendance,
+                    chartRange
+                  );
+                  return (
+                    <g key={point.date}>
+                      <circle cx={x} cy={y} r="3.5" fill={darkMode ? '#60a5fa' : '#029eff'} />
+                      {index % 3 === 0 && (
+                        <text
+                          x={x}
+                          y={chartHeight - 8}
+                          textAnchor="middle"
+                          fontSize="10"
+                          fill={darkMode ? '#9ca3af' : '#6b7280'}
+                        >
+                          {format(new Date(point.date + 'T12:00:00'), 'MMM d')}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+        )}
 
         {/* Search + Filter row */}
         <div className="w-full flex gap-[8px]">
@@ -372,9 +516,7 @@ export function History({ isAdmin }: HistoryProps) {
                         </p>
                         <div className="flex items-center gap-[6px] mt-[2px] flex-wrap">
                           {entry.createdBy && (
-                            <span className={`font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] ${
-                              darkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-700'
-                            }`}>
+                            <span className={`font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] border ${getPersonColorClasses(entry.createdBy, darkMode)}`}>
                               Added by {entry.createdBy.split('@')[0]}
                             </span>
                           )}
@@ -414,7 +556,10 @@ export function History({ isAdmin }: HistoryProps) {
                             <p className="font-semibold mb-[2px]">Averaged from:</p>
                             {entry.averagedFrom.map((contrib, idx) => (
                               <p key={idx} className="ml-[4px]">
-                                {contrib.email.split('@')[0]}: {contrib.attendance}
+                                <span className={`mr-[6px] rounded-[4px] border px-[6px] py-[2px] ${getPersonColorClasses(contrib.email, darkMode)}`}>
+                                  {contrib.email.split('@')[0]}
+                                </span>
+                                {contrib.attendance}
                               </p>
                             ))}
                           </div>

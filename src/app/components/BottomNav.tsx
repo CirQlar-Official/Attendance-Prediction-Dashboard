@@ -1,25 +1,19 @@
 import { Link, useLocation } from 'react-router';
-
 import { Home, Plus, TrendingUp, Menu, X, Clock, Users, LogOut } from 'lucide-react';
-
 import { useDarkMode } from '../context/DarkModeContext';
-
 import { useRef, useEffect, useState } from 'react';
-
 import { leaveGroup } from '../../lib/supabase';
-
 import { toast } from 'sonner';
-
 import type { Group } from '../hooks/useAttendanceData';
 
 interface BottomNavProps {
   isAdmin: boolean;
   onLeaveGroup: () => void;
+  onAuthChange: (user: any) => void;
   selectedGroup: Group | null;
 }
 
-
-export function BottomNav({ isAdmin, onLeaveGroup, selectedGroup }: BottomNavProps) {
+export function BottomNav({ isAdmin, onLeaveGroup, onAuthChange, selectedGroup }: BottomNavProps) {
   const location = useLocation();
   const { darkMode } = useDarkMode();
   const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -30,24 +24,31 @@ export function BottomNav({ isAdmin, onLeaveGroup, selectedGroup }: BottomNavPro
 
   const isActive = (path: string) => location.pathname === path;
 
-const tabs = [
-  { path: '/', icon: Home, label: 'Dashboard', strokeWidth: 1.6 },
-  { path: '/add-data', icon: Plus, label: 'Add Data', strokeWidth: 1.5 },
-  { path: '/forecast', icon: TrendingUp, label: 'Forecast', strokeWidth: 1.24 },
-  { path: '/history', icon: Clock, label: 'History', strokeWidth: 1.5 },
-  ...(isAdmin ? [{ path: '/members', icon: Users, label: 'Members', strokeWidth: 1.5 }] : []),
-];
+  const tabs = [
+    { path: '/', icon: Home, label: 'Dashboard', strokeWidth: 1.6 },
+    { path: '/add-data', icon: Plus, label: 'Add Data', strokeWidth: 1.5 },
+    { path: '/forecast', icon: TrendingUp, label: 'Forecast', strokeWidth: 1.24 },
+    { path: '/history', icon: Clock, label: 'History', strokeWidth: 1.5 },
+    ...(isAdmin ? [{ path: '/members', icon: Users, label: 'Members', strokeWidth: 1.5 }] : []),
+  ];
 
   const activeIndex = tabs.findIndex(t => t.path === location.pathname);
 
-  // Track desktop vs mobile
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Measure active tab for pill
+  useEffect(() => {
+    if (!isDesktop) {
+      const activeEl = tabRefs.current[activeIndex];
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+  }, [activeIndex, isDesktop, location.pathname]);
+
   useEffect(() => {
     const activeEl = tabRefs.current[activeIndex];
     if (!activeEl) return;
@@ -57,15 +58,9 @@ const tabs = [
     const elRect = activeEl.getBoundingClientRect();
 
     if (isDesktop) {
-      setPillStyle({
-        offset: elRect.top - parentRect.top,
-        size: elRect.height,
-      });
+      setPillStyle({ offset: elRect.top - parentRect.top, size: elRect.height });
     } else {
-      setPillStyle({
-        offset: elRect.left - parentRect.left,
-        size: elRect.width,
-      });
+      setPillStyle({ offset: elRect.left - parentRect.left, size: elRect.width });
     }
   }, [activeIndex, location.pathname, isDesktop, sidebarOpen]);
 
@@ -81,13 +76,6 @@ const tabs = [
         width: pillStyle.size,
         transition: 'left 300ms ease-out, width 300ms ease-out',
       };
-
-
-  useEffect(() => {
-    if (!isDesktop) {
-      document.documentElement.style.removeProperty('--sidebar-width');
-    }
-  }, [isDesktop]);
 
   const handleLeaveGroup = async () => {
     if (!confirm('Are you sure you want to leave this group? You\'ll need to rejoin with a code to access it again.')) {
@@ -112,53 +100,36 @@ const tabs = [
   if (isDesktop) {
     return (
       <>
-        {/* Sidebar */}
         <div
-          className={`fixed top-0 left-0 h-full z-50 flex flex-col py-[30px] px-[12px] gap-[6px] overflow-hidden
-            ${darkMode ? 'bg-gray-800 border-r-2 border-gray-700' : 'bg-white border-r-2 border-[#eceef2]'}
-          `}
-          style={{
-            width: sidebarOpen ? '200px' : '65px',
-            transition: 'width 300ms ease-out',
-          }}
+          className={`fixed left-0 top-0 z-50 flex h-full flex-col gap-3 overflow-hidden px-3 py-5 ${darkMode ? 'border-r border-slate-800/80 bg-slate-900/80' : 'border-r border-slate-200/80 bg-white/80'} backdrop-blur-xl`}
+          style={{ width: sidebarOpen ? '220px' : '74px', transition: 'width 300ms ease-out' }}
         >
-          <div
-            className="flex items-center mb-[20px] px-[10px] min-w-0"
-            style={{ justifyContent: sidebarOpen ? 'space-between' : 'center' }}
-          >
+          <div className="mb-2 flex min-w-0 items-center px-2" style={{ justifyContent: sidebarOpen ? 'space-between' : 'center' }}>
             {sidebarOpen && (
-              <p
-                className={`font-['Segoe_UI'] font-semibold text-[16px] whitespace-nowrap
-                  ${darkMode ? 'text-white' : 'text-black'}
-                `}
-              >
-                CAST
-              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 text-white shadow-lg shadow-cyan-500/20">
+      
+                 <img src='src/app/context/Logo.png' className="h-auto w-3/4" />
+                </div>
+                <div>
+                  <p className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>CAST</p>
+                  <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Attendance</p>
+                </div>
+              </div>
             )}
 
             <button
               onClick={() => setSidebarOpen(prev => !prev)}
-              className={`shrink-0 p-[4px] rounded-[6px] transition-colors
-                ${darkMode
-                  ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                  : 'text-[#9f9f9f] hover:text-black hover:bg-[#e9ebef]'}
-              `}
+              className={`shrink-0 rounded-xl p-2 transition ${darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}
               aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
             >
               {sidebarOpen ? <X size={18} strokeWidth={1.8} /> : <Menu size={18} strokeWidth={1.8} />}
             </button>
-
           </div>
 
-          <div className="relative flex flex-col gap-[4px] flex-1">
-            {/* Sliding pill */}
+          <div className="relative flex flex-1 flex-col gap-1">
             {activeIndex >= 0 && pillStyle.size > 0 && (
-              <div
-                className={`absolute left-0 right-0 rounded-[8px] ${
-                  darkMode ? 'bg-gray-700' : 'bg-[#e9ebef]'
-                }`}
-                style={pillTransitionStyle}
-              />
+              <div className={`absolute inset-x-0 rounded-2xl ${darkMode ? 'bg-slate-800/80' : 'bg-slate-100/90'}`} style={pillTransitionStyle} />
             )}
 
             {tabs.map(({ path, icon: Icon, label, strokeWidth }, i) => (
@@ -166,30 +137,11 @@ const tabs = [
                 key={path}
                 to={path}
                 ref={el => { tabRefs.current[i] = el; }}
-                className="relative flex flex-row items-center gap-[10px] px-[10px] py-[10px] z-10 rounded-[8px]"
+                className="relative z-10 flex items-center gap-3 rounded-2xl px-3 py-3"
                 style={{ minWidth: 0 }}
               >
-                <Icon
-                  className={`size-5 shrink-0 ${
-                    isActive(path)
-                      ? darkMode ? 'text-blue-400' : 'text-black'
-                      : darkMode ? 'text-gray-400' : 'text-[#9f9f9f]'
-                  }`}
-                  strokeWidth={strokeWidth}
-                />
-                {/* Label fades out when collapsed */}
-                <span
-                  className={`text-[14px] font-['Segoe_UI'] whitespace-nowrap overflow-hidden
-                    ${isActive(path)
-                      ? darkMode ? 'text-blue-400' : 'text-black'
-                      : darkMode ? 'text-gray-400' : 'text-[#9f9f9f]'}
-                  `}
-                  style={{
-                    opacity: sidebarOpen ? 1 : 0,
-                    maxWidth: sidebarOpen ? '200px' : '0px',
-                    transition: 'opacity 200ms ease-out, max-width 300ms ease-out',
-                  }}
-                >
+                <Icon className={`size-5 shrink-0 ${isActive(path) ? (darkMode ? 'text-cyan-300' : 'text-blue-600') : darkMode ? 'text-slate-400' : 'text-slate-500'}`} strokeWidth={strokeWidth} />
+                <span className={`overflow-hidden text-sm font-medium whitespace-nowrap ${isActive(path) ? (darkMode ? 'text-cyan-300' : 'text-slate-900') : darkMode ? 'text-slate-400' : 'text-slate-500'}`} style={{ opacity: sidebarOpen ? 1 : 0, maxWidth: sidebarOpen ? '200px' : '0px', transition: 'opacity 200ms ease-out, max-width 300ms ease-out' }}>
                   {label}
                 </span>
               </Link>
@@ -199,89 +151,41 @@ const tabs = [
           <button
             onClick={handleLeaveGroup}
             disabled={leavingGroup}
-            className={`flex flex-row items-center gap-[10px] px-[10px] py-[10px] rounded-[8px] transition-colors ${
-              darkMode
-                ? 'text-gray-400 hover:text-red-400 hover:bg-gray-700'
-                : 'text-[#9f9f9f] hover:text-red-600 hover:bg-[#e9ebef]'
-            } ${leavingGroup ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex items-center gap-3 rounded-2xl px-3 py-3 transition ${darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-rose-300' : 'text-slate-500 hover:bg-slate-100 hover:text-rose-600'} ${leavingGroup ? 'cursor-not-allowed opacity-50' : ''}`}
             aria-label="Leave group"
           >
             <LogOut size={18} strokeWidth={1.8} />
-            {sidebarOpen && (
-              <span className="text-[14px] font-['Segoe_UI'] whitespace-nowrap">
-                {leavingGroup ? 'Leaving...' : 'Leave Group'}
-              </span>
-            )}
+            {sidebarOpen && <span className="text-sm font-medium">{leavingGroup ? 'Leaving...' : 'Leave Group'}</span>}
           </button>
-
         </div>
 
-        <div
-          style={{
-            width: sidebarOpen ? '200px' : '65px',
-            flexShrink: 0,
-            transition: 'width 300ms ease-out',
-          }}
-        />
-
+        <div style={{ width: sidebarOpen ? '220px' : '74px', flexShrink: 0, transition: 'width 300ms ease-out' }} />
       </>
     );
   }
 
-  // ── Mobile bottom nav ────────────────────────────────────────────────────────
   return (
-    <div className={`fixed bottom-0 left-0 right-0 z-50 ${
-      darkMode ? 'bg-gray-800 border-t-2 border-gray-700' : 'bg-white border-t-2 border-[#eceef2]'
-    }`}>
-      <div className="relative flex items-center justify-around max-w-[500px] mx-auto px-4 py-[8px] h-[70px]">
-        {/* Sliding pill */}
-        {activeIndex >= 0 && pillStyle.size > 0 && (
-          <div
-            className={`absolute top-[8px] bottom-[8px] rounded-[8px] ${
-              darkMode ? 'bg-gray-700' : 'bg-[#e9ebef]'
-            }`}
-            style={pillTransitionStyle}
-          />
-        )}
+    <div className={`fixed inset-x-0 bottom-0 z-50 border-t ${darkMode ? 'border-slate-800/80 bg-slate-900/85' : 'border-slate-200/80 bg-white/85'} backdrop-blur-xl`}>
+      <div className="mx-auto flex h-[74px] max-w-[560px] items-center overflow-x-auto overflow-y-hidden px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="relative flex h-full min-w-max items-center gap-1">
+          {activeIndex >= 0 && pillStyle.size > 0 && (
+            <div className={`absolute top-2 bottom-2 rounded-2xl ${darkMode ? 'bg-slate-800/80' : 'bg-slate-100/90'}`} style={pillTransitionStyle} />
+          )}
 
-        {tabs.map(({ path, icon: Icon, label, strokeWidth }, i) => (
-          <Link
-            key={path}
-            to={path}
-            ref={el => { tabRefs.current[i] = el; }}
-            className="relative flex flex-col items-center justify-center gap-[4px] px-4 py-[6px] h-full z-10 rounded-[8px]"
-          >
-            <Icon
-              className={`size-5 ${
-                isActive(path)
-                  ? darkMode ? 'text-blue-400' : 'text-black'
-                  : darkMode ? 'text-gray-400' : 'text-[#9f9f9f]'
-              }`}
-              strokeWidth={strokeWidth}
-            />
-            <span className={`text-[13px] font-['Segoe_UI'] whitespace-nowrap ${
-              isActive(path)
-                ? darkMode ? 'text-blue-400' : 'text-black'
-                : darkMode ? 'text-gray-400' : 'text-[#9f9f9f]'
-            }`}>
-              {label}
-            </span>
-          </Link>
-        ))}
+          {tabs.map(({ path, icon: Icon, label, strokeWidth }) => (
+            <Link key={path} to={path} ref={el => { tabRefs.current[tabs.findIndex(tab => tab.path === path)] = el; }} className="relative z-10 flex h-full shrink-0 flex-col items-center justify-center gap-[4px] min-w-[72px] rounded-2xl px-3 py-2">
+              <Icon className={`size-5 ${isActive(path) ? (darkMode ? 'text-cyan-300' : 'text-blue-600') : darkMode ? 'text-slate-400' : 'text-slate-500'}`} strokeWidth={strokeWidth} />
+              <span className={`text-[12px] font-medium whitespace-nowrap ${isActive(path) ? (darkMode ? 'text-cyan-300' : 'text-slate-900') : darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                {label}
+              </span>
+            </Link>
+          ))}
 
-        <button
-          onClick={handleLeaveGroup}
-          disabled={leavingGroup}
-          className={`relative flex flex-col items-center justify-center gap-[4px] px-4 py-[6px] h-full z-10 rounded-[8px] transition-colors ${
-            darkMode
-              ? 'text-gray-400 hover:text-red-400'
-              : 'text-[#9f9f9f] hover:text-red-600'
-          } ${leavingGroup ? 'opacity-50 cursor-not-allowed' : ''}`}
-          aria-label="Leave group"
-        >
-          <LogOut size={18} strokeWidth={1.8} />
-          <span className="text-[13px] font-['Segoe_UI'] whitespace-nowrap">Leave</span>
-        </button>
+          <button onClick={handleLeaveGroup} disabled={leavingGroup} className={`relative z-10 flex h-full shrink-0 flex-col items-center justify-center gap-[4px] min-w-[72px] rounded-2xl px-3 py-2 transition ${darkMode ? 'text-slate-400 hover:text-rose-300' : 'text-slate-500 hover:text-rose-600'} ${leavingGroup ? 'cursor-not-allowed opacity-50' : ''}`} aria-label="Leave group">
+            <LogOut size={18} strokeWidth={1.8} />
+            <span className="text-[12px] font-medium">Leave</span>
+          </button>
+        </div>
       </div>
     </div>
   );

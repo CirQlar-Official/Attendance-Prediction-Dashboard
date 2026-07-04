@@ -1,19 +1,11 @@
 import { Outlet } from 'react-router';
-
 import { useState, useEffect } from 'react';
-
 import { getCurrentUser, checkIsAdmin, getUserGroup } from '../../lib/supabase';
-
 import { useDarkMode } from '../context/DarkModeContext';
-
 import { BottomNav } from './BottomNav';
-
 import { Auth } from './Auth';
-
 import { GroupSelector } from './GroupSelector';
-
 import { Toaster } from './ui/sonner';
-
 import type { Group } from '../hooks/useAttendanceData';
 
 export function RootLayout() {
@@ -84,10 +76,10 @@ export function RootLayout() {
 
   if (loading) {
     return (
-      <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} flex flex-col items-center justify-center h-full w-full`}>
+      <div className={`app-page-shell items-center justify-center ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.12),_transparent_55%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900'}`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading...</p>
+          <div className="mx-auto mb-4 h-14 w-14 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Loading CAST</p>
         </div>
       </div>
     );
@@ -95,29 +87,29 @@ export function RootLayout() {
 
   if (!user) {
     return (
-      <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} flex flex-col items-center justify-center h-full w-full p-4`}>
+      <div className={`app-page-shell ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.14),_transparent_55%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900'}`}>
         <Toaster />
-        <Auth user={user} onAuthChange={handleAuthChange} />
+        <div className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
+          <Auth user={user} onAuthChange={handleAuthChange} />
+        </div>
       </div>
     );
   }
 
   if (!selectedGroup) {
     return (
-      <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} min-h-full w-full`}>
+      <div className={`app-page-shell ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.12),_transparent_55%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900'}`}>
         <Toaster />
-        <GroupSelector user={user} isAdmin={isAdmin} onGroupSelected={handleGroupSelected} />
+        <GroupSelector user={user} isAdmin={isAdmin} onGroupSelected={handleGroupSelected} onAuthChange={handleAuthChange} />
       </div>
     );
   }
 
   return (
-    // On desktop (md+): flex-row so sidebar and content sit side by side.
-    // On mobile: flex-col, BottomNav is fixed so it doesn't affect flow.
-    <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} flex flex-col md:flex-row h-full w-full`}>
+    <div className={`app-page-shell flex-col md:flex-row ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900'}`}>
       <Toaster />
-      <BottomNav isAdmin={isAdmin} onLeaveGroup={handleLeaveGroup} selectedGroup={selectedGroup} />
-      <div className="flex-1 min-h-0 min-w-0 overflow-auto flex flex-col animate-fadeIn pb-[70px] md:pb-0">
+      <BottomNav isAdmin={isAdmin} onLeaveGroup={handleLeaveGroup} onAuthChange={handleAuthChange} selectedGroup={selectedGroup} />
+      <div className="flex-1 min-h-0 min-w-0 overflow-auto pb-[78px] md:pb-0">
         <Outlet context={{ user, darkMode, isAdmin, selectedGroup }} />
       </div>
     </div>
