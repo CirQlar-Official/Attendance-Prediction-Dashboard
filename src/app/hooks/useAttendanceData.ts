@@ -527,26 +527,84 @@ export function useAttendanceData(groupId: string | null) {
       insertData.averaged_from = JSON.stringify(averagedFrom);
     }
 
-    // If replacing, delete the old entry first
+    const newEntry: AttendanceEntry = {
+      id: entryIdToReplace ?? '',
+      date: raw.date,
+      attendance: attendanceToStore,
+      year,
+      month,
+      week,
+      lag1: lags.lag1,
+      lag4: lags.lag4,
+      roll4: lags.roll4,
+      delta1: lags.delta1,
+      delta4: lags.delta4,
+      isSummer: raw.isSummer,
+      isHolidaySeason: raw.isHolidaySeason,
+      churchEvent: raw.churchEvent,
+      isFastSunday: raw.isFastSunday,
+      low_temp: weather?.low_temp || 65,
+      high_temp: weather?.high_temp || 55,
+      rainfall: weather?.rainfall || 0,
+      snowfall: weather?.snowfall || 0,
+      groupId,
+      createdBy: user?.email,
+      averagedFrom,
+    };
+
+    // If replacing, update the existing entry instead of delete+insert
     if (entryIdToReplace) {
-      const { error: deleteError } = await supabase
+      const { error } = await supabase
         .from('attendance_entries')
-        .delete()
+        .update(insertData)
         .eq('id', entryIdToReplace);
 
-      if (deleteError) {
-        console.error('Error deleting old entry:', deleteError);
-        throw deleteError;
+      if (error) {
+        console.error('Error updating entry:', error);
+        throw error;
       }
-    }
 
-    const { error } = await supabase
-      .from('attendance_entries')
-      .insert(insertData);
+      setEntries(prev => prev.map(e => (e.id === entryIdToReplace ? newEntry : e)));
+    } else {
+      const { data: insertedEntry, error } = await supabase
+        .from('attendance_entries')
+        .insert(insertData)
+        .select('*')
+        .single();
 
-    if (error) {
-      console.error('Error adding entry:', error);
-      throw error;
+      if (error) {
+        console.error('Error adding entry:', error);
+        throw error;
+      }
+
+      if (insertedEntry) {
+        const savedEntry: AttendanceEntry = {
+          id: insertedEntry.id,
+          date: insertedEntry.date,
+          attendance: insertedEntry.attendance,
+          year: insertedEntry.year,
+          month: insertedEntry.month,
+          week: insertedEntry.week,
+          lag1: insertedEntry.lag1,
+          lag4: insertedEntry.lag4,
+          roll4: insertedEntry.roll4,
+          delta1: insertedEntry.delta1,
+          delta4: insertedEntry.delta4,
+          isSummer: insertedEntry.is_summer,
+          isHolidaySeason: insertedEntry.is_holiday_season,
+          churchEvent: insertedEntry.church_event,
+          isFastSunday: insertedEntry.is_fast_sunday,
+          low_temp: insertedEntry.low_temp,
+          high_temp: insertedEntry.high_temp,
+          rainfall: insertedEntry.rainfall,
+          snowfall: insertedEntry.snowfall,
+          groupId: insertedEntry.group_id,
+          createdBy: insertedEntry.created_by,
+          averagedFrom: insertedEntry.averaged_from ? JSON.parse(insertedEntry.averaged_from) : undefined,
+        };
+
+        setEntries(prev => [...prev, savedEntry]);
+      }
     }
   };
 

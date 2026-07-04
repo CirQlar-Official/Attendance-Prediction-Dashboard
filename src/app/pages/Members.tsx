@@ -1,15 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { useDarkMode } from '../context/DarkModeContext';
-import { getGroupMembersWithDetails, removeUserFromGroup, getCurrentUser, getUserProfilesForGroup } from '../../lib/supabase';
+import { getGroupMembersWithDetails, removeUserFromGroup, getCurrentUser, getProfilesForUserIds } from '../../lib/supabase';
 import type { Group } from '../hooks/useAttendanceData';
-import { Users, Key, Trash2, Loader } from 'lucide-react';
+import { Users, Key, Trash2, Loader, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface MemberRow {
+  user_id: string;
+  joined_at: string;
+  email?: string;
+  full_name?: string;
+  displayName?: string;
+}
 
 export function Members() {
   const { selectedGroup, isAdmin } = useOutletContext<{ selectedGroup: Group | null; isAdmin: boolean }>();
   const { darkMode } = useDarkMode();
-  const [members, setMembers] = useState<{ user_id: string; joined_at: string; email?: string }[]>([]);
+  const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -31,12 +39,19 @@ export function Members() {
       setError(null);
       try {
         const result = await getGroupMembersWithDetails(selectedGroup.id);
-        const profileMap = await getUserProfilesForGroup(selectedGroup.id);
+        
+        const memberIds = result.map(m => m.user_id);
+        const profileRows = await getProfilesForUserIds(memberIds);
+        const profileById = new Map(profileRows.map((profile: any) => [profile.user_id, profile]));
 
-        const membersWithNames = result.map((m: any) => ({
-          ...m,
-          email: profileMap[m.user_id] || `User ${m.user_id.slice(0, 8)}`
-        }));
+        const membersWithEmails = result.map(m => {
+          const profile = profileById.get(m.user_id);
+          return {
+            ...m,
+            email: profile?.full_name || `User ${m.user_id.slice(0, 8)}`,
+            displayName: profile?.full_name || `User ${m.user_id.slice(0, 8)}`,
+          };
+        });
 
         setMembers(membersWithNames);
       } catch (err: any) {
@@ -67,66 +82,58 @@ export function Members() {
   };
 
   return (
-    <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      <div className="flex flex-col gap-[20px] items-start p-[10px] w-full pb-[80px]">
-        <div className={`flex flex-col gap-4 p-5 rounded-[20px] w-full border-2 sm:flex-row sm:items-center sm:justify-between ${darkMode ? 'border-gray-700 bg-gray-800 text-white' : 'border-[#eceef2] bg-white text-black'}`}>
-          <div>
-            <p className="font-['Segoe_UI'] text-[24px] font-semibold">Group Members</p>
-            <p className="font-['Segoe_UI'] text-[14px] opacity-80">
-              See the join code and attendance contributors for {selectedGroup?.name ?? 'your group'}.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-[16px] px-4 py-3 bg-blue-600 text-white">
-            <Key className="size-5" />
-            <div className="text-left">
-              <p className="text-[12px] uppercase opacity-80">Join Code</p>
-              <p className="font-semibold text-[16px]">{selectedGroup?.joinCode ?? 'N/A'}</p>
+    <div className={`min-h-full w-full overflow-auto px-3 py-3 pb-24 sm:px-4 sm:py-4 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+      <div className="mx-auto flex max-w-5xl flex-col gap-4">
+        <div className={`app-shell-card-strong overflow-hidden p-4 sm:p-6`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-slate-50/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400">
+                <Sparkles className="size-3.5" />
+                Members
+              </div>
+              <div>
+                <p className="text-2xl font-semibold tracking-tight">Group members</p>
+                <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>See the join code and the people contributing to {selectedGroup?.name ?? 'your group'}.</p>
+              </div>
+            </div>
+            <div className={`flex items-center gap-3 rounded-[24px] border px-4 py-3 ${darkMode ? 'border-cyan-900/60 bg-cyan-950/50 text-cyan-200' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}>
+              <Key className="size-5" />
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] opacity-70">Join code</p>
+                <p className="text-lg font-semibold">{selectedGroup?.joinCode ?? 'N/A'}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className={`w-full rounded-[20px] border-2 p-5 ${darkMode ? 'border-gray-700 bg-gray-800 text-white' : 'border-[#eceef2] bg-white text-black'}`}>
-          <div className="flex items-center gap-3 mb-4">
-            <Users className="size-5" />
-            <p className="font-['Segoe_UI'] text-[18px] font-semibold">People in this group</p>
+        <div className={`app-shell-card p-4 sm:p-5`}>
+          <div className="mb-4 flex items-center gap-3">
+            <Users className="size-5 text-cyan-500" />
+            <div>
+              <p className="app-section-label">People</p>
+              <h2 className="mt-1 text-lg font-semibold">People in this group</h2>
+            </div>
           </div>
 
           {loading ? (
-            <p className="font-['Segoe_UI'] text-[14px] opacity-80">Loading members…</p>
+            <div className="flex items-center gap-2 text-sm text-slate-500"><Loader className="size-4 animate-spin" />Loading members…</div>
           ) : error ? (
-            <p className="font-['Segoe_UI'] text-[14px] text-red-400">{error}</p>
+            <p className="text-sm text-rose-500">{error}</p>
           ) : members.length === 0 ? (
-            <p className="font-['Segoe_UI'] text-[14px] opacity-80">No members found yet.</p>
+            <p className="text-sm text-slate-500">No members found yet.</p>
           ) : (
             <ul className="space-y-3">
               {members.map(member => {
                 const isCurrentUser = member.user_id === currentUserId;
                 return (
-                  <li key={member.user_id} className={`rounded-[14px] px-4 py-3 flex items-center justify-between ${darkMode ? 'bg-gray-900' : 'bg-[#f8fafc]'}`}>
+                  <li key={member.user_id} className={`flex items-center justify-between rounded-[20px] border px-4 py-3 ${darkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-50/70'}`}>
                     <div>
-                      <p className="font-['Segoe_UI'] text-[14px]">{member.email}</p>
-                      <p className="font-['Segoe_UI'] text-[12px] opacity-60">
-                        Joined {new Date(member.joined_at).toLocaleDateString()}
-                      </p>
+                      <p className="text-sm font-semibold">{member.full_name || member.email}</p>
+                      <p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Joined {new Date(member.joined_at).toLocaleDateString()}</p>
                     </div>
                     {isAdmin && !isCurrentUser && (
-                      <button
-                        onClick={() => handleRemoveUser(member.user_id, member.email || 'User')}
-                        disabled={removingUserId === member.user_id}
-                        className={`p-2 rounded-lg transition-colors ${
-                          removingUserId === member.user_id
-                            ? 'opacity-50 cursor-not-allowed'
-                            : darkMode
-                            ? 'text-gray-400 hover:text-red-400 hover:bg-gray-800'
-                            : 'text-gray-600 hover:text-red-600 hover:bg-gray-200'
-                        }`}
-                        aria-label={`Remove ${member.email}`}
-                      >
-                        {removingUserId === member.user_id ? (
-                          <Loader className="size-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="size-4" />
-                        )}
+                      <button onClick={() => handleRemoveUser(member.user_id, member.email || 'User')} disabled={removingUserId === member.user_id} className={`rounded-2xl p-2 transition ${removingUserId === member.user_id ? 'cursor-not-allowed opacity-50' : darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-rose-400' : 'text-slate-500 hover:bg-slate-100 hover:text-rose-600'}`} aria-label={`Remove ${member.email}`}>
+                        {removingUserId === member.user_id ? <Loader className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
                       </button>
                     )}
                   </li>

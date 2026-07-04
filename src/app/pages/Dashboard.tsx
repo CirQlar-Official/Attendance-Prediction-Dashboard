@@ -1,18 +1,9 @@
 import { useAttendanceData, type Group } from '../hooks/useAttendanceData';
 import { useDarkMode } from '../context/DarkModeContext';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Network} from 'lucide-react';
 import { useOutletContext } from 'react-router';
-
 import { useState, useEffect } from 'react';
 
 export function Dashboard() {
@@ -21,19 +12,15 @@ export function Dashboard() {
   const { sorted, getStats } = useAttendanceData(selectedGroup?.id ?? null);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
   const { darkMode, setDarkMode } = useDarkMode();
   const stats = getStats();
 
-  const chartData = sorted
-  .slice(isDesktop ? -30 : -10)
-  .map(entry => ({
+  const chartData = sorted.slice(isDesktop ? -30 : -10).map(entry => ({
     date: format(new Date(entry.date + 'T12:00:00'), 'MMM d'),
     attendance: entry.attendance,
   }));
@@ -41,187 +28,102 @@ export function Dashboard() {
   const today = new Date();
   const formattedDate = format(today, 'EEEE, MMMM d, yyyy');
 
+  const metricCards = [
+    { label: 'Last week', value: stats?.lastWeek ?? 0, accent: 'from-blue-500/15 to-cyan-500/10' },
+    { label: 'Month avg', value: stats?.monthAvg ?? 0, accent: 'from-teal-500/15 to-emerald-500/10' },
+    { label: 'YTD avg', value: stats?.ytdAvg ?? 0, accent: 'from-violet-500/15 to-fuchsia-500/10' },
+  ];
+
   return (
-    <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      <div className="flex flex-col gap-[20px] items-start p-[10px] w-full pb-[80px]">
-        {/* Header */}
-        <div className="flex flex-col items-center justify-center pt-[50px] w-full text-center gap-4">
-          <div className="flex items-center justify-between w-full px-4">
-            <div className="w-8" /> {/* spacer */}
-            <div>
-              <p className={`font-['Segoe_UI'] font-semibold text-[24px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                {selectedGroup?.name ?? 'Attendance Group'}
-              </p>
-              <p className={`font-['Segoe_UI'] text-[16px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
-                {formattedDate}
-              </p>
+    <div className={`min-h-full w-full overflow-auto px-3 py-3 pb-24 sm:px-4 sm:py-4 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+      <div className="mx-auto flex max-w-6xl flex-col gap-4">
+        <div className={`app-shell-card-strong overflow-hidden p-4 sm:p-6`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-3">
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{selectedGroup?.name ?? 'Attendance Group'}</h1>
+                <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{formattedDate}</p>
+              </div>
             </div>
-            <div className="flex flex-col items-end gap-2">
+
+            <div className="flex items-center gap-2">
               {isAdmin && selectedGroup?.joinCode && (
-                <div className={`rounded-full px-3 py-1 text-[12px] font-semibold ${darkMode ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-900'}`}>
+                <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${darkMode ? 'border-cyan-900/60 bg-cyan-950/50 text-cyan-300' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}>
                   Join code: {selectedGroup.joinCode}
                 </div>
               )}
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`px-3 py-2 rounded-lg transition ${
-                  darkMode ? 'bg-white text-gray-900' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                {darkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
+              <button onClick={() => setDarkMode(!darkMode)} className={`rounded-2xl p-2.5 transition ${darkMode ? 'bg-slate-800 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                {darkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Current Attendance */}
-        <div className={`h-[150px] w-full rounded-[15px] p-[30px] flex flex-col items-center justify-between text-center ${
-          'bg-gray-800 text-white' 
-        }`} style={{
-          background: darkMode
-            ? 'radial-gradient(ellipse at top, rgba(2,158,255,0.25) 0%, rgba(10,15,40,1) 60%), linear-gradient(180deg, rgba(10,15,40,1) 0%, rgba(5,8,25,1) 100%)'
-            : 'radial-gradient(ellipse at top, rgba(2,158,255,0.35) 0%, rgba(0,1,50,1) 60%), linear-gradient(180deg, rgba(0,1,50,1) 0%, rgba(0,20,70,1) 100%)',
-          boxShadow: '0 0 30px rgba(2,158,255,0.15)',
-        }}>
-          <p className="font-['Segoe_UI'] font-semibold text-[20px]">
-            Most Recent Attendance
-          </p>
-          <p className="font-['Segoe_UI'] font-light text-[48px]">
-            {stats?.current ?? 0}
-          </p>
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-[10px] w-full">
-          <div className={`rounded-[15px] border-2 p-[15px] flex flex-col items-start justify-between h-[110px] ${
-            darkMode
-              ? 'border-gray-700 bg-gray-800 text-white'
-              : 'border-[#eceef2] bg-white text-black'
-          }`}>
-            <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
-              Last Week
-            </p>
-            <p className={`font-['Segoe_UI'] text-[22px] ${darkMode ? 'text-white' : 'text-black'}`}>
-              {stats?.lastWeek ?? 0}
-            </p>
-          </div>
-
-          <div className={`rounded-[15px] border-2 p-[15px] flex flex-col items-start justify-between h-[110px] ${
-            darkMode
-              ? 'border-gray-700 bg-gray-800 text-white'
-              : 'border-[#eceef2] bg-white text-black'
-          }`}>
-            <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
-              Month Avg
-            </p>
-            <p className={`font-['Segoe_UI'] text-[22px] ${darkMode ? 'text-white' : 'text-black'}`}>
-              {stats?.monthAvg ?? 0}
-            </p>
-          </div>
-
-          <div className={`rounded-[15px] border-2 p-[15px] flex flex-col items-start justify-between h-[110px] ${
-            darkMode
-              ? 'border-gray-700 bg-gray-800 text-white'
-              : 'border-[#eceef2] bg-white text-black'
-          }`}>
-            <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
-              YTD Avg
-            </p>
-            <p className={`font-['Segoe_UI'] text-[22px] ${darkMode ? 'text-white' : 'text-black'}`}>
-              {stats?.ytdAvg ?? 0}
-            </p>
-          </div>
-        </div>
-
-        {/* Graph */}
-        <div className={`h-[300px] w-full rounded-[15px] border-2 p-[20px] ${
-          darkMode
-            ? 'border-gray-700 bg-gray-800'
-            : 'border-[#eceef2] bg-white'
-        }`}>
-          <p className={`font-['Segoe_UI'] text-[16px] mb-[15px] ${darkMode ? 'text-white' : 'text-black'}`}>
-            Attendance Trend
-          </p>
-          
-          
-          <ResponsiveContainer width="100%" height="85%">
-            <LineChart data={chartData}>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke={darkMode ? '#444' : '#eceef2'}
-              />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11, fill: darkMode ? '#999' : '#4c4c4c' }}
-                stroke={darkMode ? '#444' : '#eceef2'}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: darkMode ? '#999' : '#4c4c4c' }}
-                stroke={darkMode ? '#444' : '#eceef2'}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: darkMode ? '#333' : '#fff',
-                  border: `1px solid ${darkMode ? '#555' : '#eceef2'}`,
-                  borderRadius: '8px',
-                  color: darkMode ? '#fff' : '#000',
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="attendance"
-                stroke={darkMode ? '#029eff' : '#000124'}
-                strokeWidth={2}
-                dot={{ fill: darkMode ? '#029eff' : '#000124', r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Recent records */}
-        <div className={`w-full rounded-[15px] border-2 p-[20px] ${
-          darkMode
-            ? 'border-gray-700 bg-gray-800'
-            : 'border-[#eceef2] bg-white'
-        }`}>
-          <p className={`font-['Segoe_UI'] text-[16px] mb-[10px] ${darkMode ? 'text-white' : 'text-black'}`}>
-            Recent Records
-          </p>
-          {[...sorted].reverse().slice(0, 6).map((entry, idx, arr) => (
-            <div
-              key={entry.id}
-              className={`h-[50px] w-full flex items-center px-[10px] ${
-                idx !== arr.length - 1 ? `border-b ${darkMode ? 'border-gray-700' : 'border-[#eceef2]'}` : ''
-              }`}
-            >
-              <p className={`flex-1 font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-gray-300' : 'text-black'}`}>
-                {format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}
-              </p>
-              {entry.churchEvent !== 'None' && (
-                <span className={`text-[11px] rounded px-2 py-0.5 mr-2 ${
-                  darkMode
-                    ? 'bg-gray-700 text-gray-300'
-                    : 'bg-[#eceef2] text-[#4c4c4c]'
-                }`}>
-                  {entry.churchEvent}
-                </span>
-              )}
-              {entry.isFastSunday === 1 && (
-                <span className={`text-[11px] rounded px-2 py-0.5 mr-2 ${
-                  darkMode
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-[#000124] text-white'
-                }`}>
-                  Fast
-                </span>
-              )}
-              <p className={`font-['Segoe_UI'] text-[16px] ${darkMode ? 'text-white' : 'text-black'}`}>
-                {entry.attendance}
-              </p>
+        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 p-6 text-white shadow-[0_25px_70px_-30px_rgba(37,99,235,0.65)]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-50/80">Most recent attendance</p>
+                <p className="mt-3 text-5xl font-semibold sm:text-6xl">{stats?.current ?? 0}</p>
+              </div>
             </div>
-          ))}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {metricCards.map(card => (
+              <div key={card.label} className={`app-shell-card rounded-[22px] border p-4 ${darkMode ? 'border-slate-800 bg-slate-900/70' : 'border-slate-200 bg-white/80'}`}>
+                <div className={`rounded-2xl bg-gradient-to-br ${card.accent} p-3`}>
+                  <p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{card.label}</p>
+                  <p className="mt-2 text-2xl font-semibold">{card.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={`app-shell-card p-4 sm:p-5`}>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p className="app-section-label">Trend</p>
+              <h2 className="mt-1 text-lg font-semibold">Attendance trend</h2>
+            </div>
+            <span className="app-pill">Last {chartData.length} updates</span>
+          </div>
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#e2e8f0'} />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: darkMode ? '#94a3b8' : '#64748b' }} stroke={darkMode ? '#334155' : '#cbd5e1'} />
+                <YAxis tick={{ fontSize: 11, fill: darkMode ? '#94a3b8' : '#64748b' }} stroke={darkMode ? '#334155' : '#cbd5e1'} domain={['auto', 'auto']} />
+                <Tooltip contentStyle={{ backgroundColor: darkMode ? '#0f172a' : '#ffffff', border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '12px', color: darkMode ? '#f8fafc' : '#0f172a' }} />
+                <Line type="monotone" dataKey="attendance" stroke={darkMode ? '#38bdf8' : '#2563eb'} strokeWidth={3} dot={{ fill: darkMode ? '#38bdf8' : '#2563eb', r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className={`app-shell-card p-4 sm:p-5`}>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p className="app-section-label">Recent</p>
+              <h2 className="mt-1 text-lg font-semibold">Recent records</h2>
+            </div>
+            <span className="app-pill">Latest activity</span>
+          </div>
+          <div className="space-y-2">
+            {[...sorted].reverse().slice(0, 6).map((entry, idx, arr) => (
+              <div key={entry.id} className={`flex items-center justify-between rounded-2xl px-3 py-3 ${idx !== arr.length - 1 ? (darkMode ? 'border-b border-slate-800/70' : 'border-b border-slate-100') : ''}`}>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}</p>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {entry.churchEvent !== 'None' && <span className={`rounded-full px-2.5 py-1 text-[11px] ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{entry.churchEvent}</span>}
+                    {entry.isFastSunday === 1 && <span className={`rounded-full px-2.5 py-1 text-[11px] ${darkMode ? 'bg-cyan-950/70 text-cyan-300' : 'bg-cyan-50 text-cyan-700'}`}>Fast</span>}
+                  </div>
+                </div>
+                <p className="text-lg font-semibold">{entry.attendance}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
