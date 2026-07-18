@@ -44,7 +44,7 @@ import { DataLoadingState, DataErrorState } from '../components/DataState';
 
 export function Forecast() {
   const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
-  const { sorted, loading, error, predictNextAttendance } = useAttendanceData(selectedGroup?.id ?? null);
+  const { sorted, loading, error, modelTraining, predictNextAttendance } = useAttendanceData(selectedGroup?.id ?? null);
   const { darkMode, setDarkMode } = useDarkMode();
 
   // ── Always calculate from TODAY ──────────────────────────────────────────────
@@ -153,9 +153,12 @@ export function Forecast() {
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-50/80">RF model prediction</p>
               <p className="mt-3 text-5xl font-semibold sm:text-6xl">{prediction}</p>
               <p className="mt-2 text-sm text-blue-50/90">± {std} range across {result.treePredictions.length} trees</p>
+              {modelTraining && (
+                <p className="mt-1 text-xs text-blue-50/70">Updating model with latest data…</p>
+              )}
             </div>
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
-              <Radar className="size-6" />
+              <Radar className={`size-6 ${modelTraining ? 'animate-pulse' : ''}`} />
             </div>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 ">

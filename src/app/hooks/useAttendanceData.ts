@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo, useId } from 'react';
+import { useState, useEffect, useMemo, useId, useRef } from 'react';
 import {
-  trainRandomForest,
   predictForest,
   featureImportances,
   type Forest,
   type RFResult,
 } from '../utils/randomForest';
+import { RandomForestClient } from '../workers/randomForestClient';
 import { supabase, getCurrentUserFullName } from '../../lib/supabase';
 import { fetchWeatherForDate } from '../../lib/weather';
 
@@ -507,11 +507,41 @@ export function useAttendanceData(groupId: string | null) {
     [entries]
   );
 
-  const forest = useMemo<Forest>(() => {
-    if (sorted.length < 5) return [];
+  const [forest, setForest] = useState<Forest>([]);
+  const [modelTraining, setModelTraining] = useState(false);
+  const rfClientRef = useRef<RandomForestClient | null>(null);
+  const latestRequestIdRef = useRef(-1);
+
+  useEffect(() => {
+    rfClientRef.current = new RandomForestClient();
+    return () => {
+      rfClientRef.current?.terminate();
+      rfClientRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (sorted.length < 5) {
+      setForest([]);
+      setModelTraining(false);
+      return;
+    }
+    if (!rfClientRef.current) return;
+
     const X = sorted.map(e => toFeatureVector(e));
     const y = sorted.map(e => e.attendance);
-    return trainRandomForest(X, y);
+    const { requestId, result } = rfClientRef.current.train(X, y);
+    latestRequestIdRef.current = requestId;
+    setModelTraining(true);
+
+    result.then(trainedForest => {
+      // A newer training request may have been fired (sorted changed
+      // again) before this one finished - ignore a stale response so an
+      // out-of-date forest can't clobber a more recent one.
+      if (latestRequestIdRef.current !== requestId) return;
+      setForest(trainedForest);
+      setModelTraining(false);
+    });
   }, [sorted]);
 
   const deleteEntry = async (id: string) => {
@@ -825,6 +855,7 @@ export function useAttendanceData(groupId: string | null) {
     sorted,
     loading,
     error,
+    modelTraining,
     addEntry,
     deleteEntry,
     updateEntry,
