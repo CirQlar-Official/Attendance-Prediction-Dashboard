@@ -8,6 +8,7 @@ import {
   computeNextWeekFeatures,
   computeNextWeekLagSummary,
   toFeatureVector,
+  mergeContributor,
   type AttendanceEntry,
 } from '../useAttendanceData';
 
@@ -185,6 +186,49 @@ describe('computeNextWeekLagSummary', () => {
     const summary = computeNextWeekLagSummary(sorted);
     // lag1 = 95 (most recent), lag4 = 80 (4th-from-last)
     expect(summary.delta4).toBe(95 - 80);
+  });
+});
+
+describe('mergeContributor', () => {
+  it('adds a new contributor when none exists yet', () => {
+    const result = mergeContributor([], 'Alice', 100);
+    expect(result.contributors).toEqual([{ email: 'Alice', attendance: 100 }]);
+    expect(result.attendanceToStore).toBe(100);
+  });
+
+  it('averages a new contributor in alongside an existing one', () => {
+    const existing = [{ email: 'Alice', attendance: 100 }];
+    const result = mergeContributor(existing, 'Bob', 120);
+    expect(result.contributors).toEqual([
+      { email: 'Alice', attendance: 100 },
+      { email: 'Bob', attendance: 120 },
+    ]);
+    expect(result.attendanceToStore).toBe(110);
+  });
+
+  it('replaces the same contributor resubmitting instead of appending a duplicate', () => {
+    const existing = [
+      { email: 'Alice', attendance: 100 },
+      { email: 'Bob', attendance: 120 },
+    ];
+    // Alice resubmits a corrected value for the same date.
+    const result = mergeContributor(existing, 'Alice', 90);
+    expect(result.contributors).toEqual([
+      { email: 'Alice', attendance: 90 },
+      { email: 'Bob', attendance: 120 },
+    ]);
+    // Average of 90 and 120, not a three-way average that still counts Alice's old 100.
+    expect(result.attendanceToStore).toBe(105);
+  });
+
+  it('is idempotent: resubmitting the same value repeatedly does not change the average', () => {
+    let contributors = [{ email: 'Alice', attendance: 100 }];
+    for (let i = 0; i < 5; i++) {
+      const result = mergeContributor(contributors, 'Alice', 100);
+      contributors = result.contributors;
+      expect(result.attendanceToStore).toBe(100);
+      expect(result.contributors).toHaveLength(1);
+    }
   });
 });
 

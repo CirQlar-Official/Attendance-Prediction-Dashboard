@@ -41,7 +41,7 @@ export interface AttendanceEntry {
   snowfall?: number;
   groupId: string;
   createdBy?: string;
-  averagedFrom?: Array<{ email: string; attendance: number }>;
+  averagedFrom?: Contributor[];
 }
 
 export interface Group {
@@ -264,6 +264,39 @@ export function computeNextWeekFeatures(
   ];
 }
 
+export interface Contributor {
+  email: string;
+  attendance: number;
+}
+
+/**
+ * Merges a new submission into an existing entry's contributor list for
+ * same-date averaging. If the submitter already has a contribution on
+ * this entry (matched by their resolved display name - the only identity
+ * available today, see getCurrentUserFullName), it is replaced rather
+ * than appended, so repeated submissions by the same person converge to
+ * their latest value instead of permanently skewing the average.
+ */
+export function mergeContributor(
+  existingContributors: Contributor[],
+  submitterName: string,
+  newAttendance: number
+): { contributors: Contributor[]; attendanceToStore: number } {
+  const contributors = [...existingContributors];
+  const existingIndex = contributors.findIndex(c => c.email === submitterName);
+
+  if (existingIndex >= 0) {
+    contributors[existingIndex] = { email: submitterName, attendance: newAttendance };
+  } else {
+    contributors.push({ email: submitterName, attendance: newAttendance });
+  }
+
+  const total = contributors.reduce((sum, c) => sum + c.attendance, 0);
+  const attendanceToStore = Math.round(total / contributors.length);
+
+  return { contributors, attendanceToStore };
+}
+
 /** Maps a raw `attendance_entries` row (snake_case) to the app's AttendanceEntry shape. */
 function mapRowToEntry(row: any): AttendanceEntry {
   return {
@@ -442,6 +475,7 @@ export function useAttendanceData(groupId: string | null) {
     }
 
     const weather = await fetchWeatherForDate(d);
+    const fullName = await getCurrentUserFullName();
 
     // Check if an entry already exists for this date
     const { data: existingEntries, error: queryError } = await supabase
@@ -456,37 +490,29 @@ export function useAttendanceData(groupId: string | null) {
     }
 
     let attendanceToStore = raw.attendance;
-    let averagedFrom: Array<{ email: string; attendance: number }> | undefined = undefined;
+    let averagedFrom: Contributor[] | undefined = undefined;
     let entryIdToReplace: string | null = null;
 
-    // If entry exists, average the data
+    // If an entry already exists for this date, average this submission
+    // into it rather than overwriting or duplicating.
     if (existingEntries && existingEntries.length > 0) {
       const existing = existingEntries[0];
       entryIdToReplace = existing.id;
 
-      // Build the averaged_from array
-      const contributors: Array<{ email: string; attendance: number }> = [];
-
-      // Add existing contributors
+      let priorContributors: Contributor[] = [];
       if (existing.averaged_from) {
         try {
-          const parsed = JSON.parse(existing.averaged_from);
-          contributors.push(...parsed);
+          priorContributors = JSON.parse(existing.averaged_from);
         } catch (e) {
           console.error('Failed to parse existing averaged_from:', e);
         }
       } else if (existing.created_by) {
-        contributors.push({ email: existing.created_by, attendance: existing.attendance });
+        priorContributors = [{ email: existing.created_by, attendance: existing.attendance }];
       }
 
-      // Add the new contributor
-      const fullName = await getCurrentUserFullName();
-      contributors.push({ email: fullName, attendance: raw.attendance });
-
-      // Calculate average
-      const totalAttendance = contributors.reduce((sum, c) => sum + c.attendance, 0);
-      attendanceToStore = Math.round(totalAttendance / contributors.length);
-      averagedFrom = contributors;
+      const merged = mergeContributor(priorContributors, fullName, raw.attendance);
+      attendanceToStore = merged.attendanceToStore;
+      averagedFrom = merged.contributors;
     }
 
     const insertData: any = {
@@ -508,7 +534,7 @@ export function useAttendanceData(groupId: string | null) {
       low_temp: weather?.low_temp || 55,
       rainfall: weather?.rainfall || 0,
       snowfall: weather?.snowfall || 0,
-      created_by: await getCurrentUserFullName(),
+      created_by: fullName,
       group_id: groupId,
     };
 
@@ -537,7 +563,7 @@ export function useAttendanceData(groupId: string | null) {
       rainfall: weather?.rainfall || 0,
       snowfall: weather?.snowfall || 0,
       groupId,
-      createdBy: user?.email,
+      createdBy: fullName,
       averagedFrom,
     };
 
