@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useId } from 'react';
 import {
   trainRandomForest,
   predictForest,
@@ -402,6 +402,15 @@ export function useAttendanceData(groupId: string | null) {
   loading;
   const [user, setUser] = useState<any>(null);
 
+  // A stable id per mounted hook instance. Supabase's realtime client
+  // reuses the SAME underlying channel for any two `.channel(topic)`
+  // calls that share a topic string - so a hardcoded topic here would
+  // mean every page's independent subscription (and its groupId-based
+  // filtering closure) collapses onto one shared channel, and one
+  // instance's cleanup-time unsubscribe() can tear down realtime
+  // delivery for another still-mounted instance entirely.
+  const instanceId = useId();
+
   useEffect(() => {
     const loadData = async () => {
       const { data } = await supabase.auth.getUser();
@@ -418,14 +427,10 @@ export function useAttendanceData(groupId: string | null) {
       setLoading(false);
 
       const channel = supabase
-        .channel('attendance_entries_insert')
+        .channel(`attendance_entries:${groupId}:${instanceId}`)
         .on(
           'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'attendance_entries',
-          },
+          { event: 'INSERT', schema: 'public', table: 'attendance_entries' },
           (payload: any) => {
             const newEntry = payload.new as any;
             if (newEntry.group_id !== groupId) {
@@ -440,6 +445,31 @@ export function useAttendanceData(groupId: string | null) {
             );
           }
         )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'attendance_entries' },
+          (payload: any) => {
+            const updated = payload.new as any;
+            if (updated.group_id !== groupId) {
+              return;
+            }
+            const mapped = mapRowToEntry(updated);
+            setEntries(prev => prev.map(e => (e.id === mapped.id ? mapped : e)));
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'attendance_entries' },
+          (payload: any) => {
+            // DELETE payloads only reliably include the primary key (not
+            // group_id) unless the table has REPLICA IDENTITY FULL, which
+            // isn't guaranteed here - so filter by whether we actually have
+            // this row rather than by group_id.
+            const deletedId = (payload.old as any)?.id;
+            if (!deletedId) return;
+            setEntries(prev => prev.filter(e => e.id !== deletedId));
+          }
+        )
         .subscribe();
 
       return () => {
@@ -448,7 +478,7 @@ export function useAttendanceData(groupId: string | null) {
     };
 
     loadData();
-  }, [groupId]);
+  }, [groupId, instanceId]);
 
   const sorted = useMemo(
     () => [...entries].sort((a, b) => a.date.localeCompare(b.date)),
