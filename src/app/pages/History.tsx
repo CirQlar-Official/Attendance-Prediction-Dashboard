@@ -25,77 +25,27 @@ import {
 import { Input, SmoothInput } from '../components/ui/input';
 import { DataLoadingState, DataErrorState } from '../components/DataState';
 
-// ─── Color utility ────────────────────────────────────────────────────────────
-
-function colorFromName(name: string): {
-  light: { bg: string; text: string };
-  dark: { bg: string; text: string };
-} {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    hash |= 0;
-  }
-
-  const colors: { bg: string; text: string }[] = [
-    { bg: 'bg-purple-100',  text: 'text-purple-700'  },
-    { bg: 'bg-blue-100',    text: 'text-blue-700'    },
-    { bg: 'bg-green-100',   text: 'text-green-700'   },
-    { bg: 'bg-yellow-100',  text: 'text-yellow-700'  },
-    { bg: 'bg-pink-100',    text: 'text-pink-700'    },
-    { bg: 'bg-orange-100',  text: 'text-orange-700'  },
-    { bg: 'bg-teal-100',    text: 'text-teal-700'    },
-    { bg: 'bg-red-100',     text: 'text-red-700'     },
-    { bg: 'bg-indigo-100',  text: 'text-indigo-700'  },
-    { bg: 'bg-cyan-100',    text: 'text-cyan-700'    },
-  ];
-
-  const darkColors: { bg: string; text: string }[] = [
-    { bg: 'bg-purple-900',  text: 'text-purple-300'  },
-    { bg: 'bg-blue-900',    text: 'text-blue-300'    },
-    { bg: 'bg-green-900',   text: 'text-green-300'   },
-    { bg: 'bg-yellow-900',  text: 'text-yellow-300'  },
-    { bg: 'bg-pink-900',    text: 'text-pink-300'    },
-    { bg: 'bg-orange-900',  text: 'text-orange-300'  },
-    { bg: 'bg-teal-900',    text: 'text-teal-300'    },
-    { bg: 'bg-red-900',     text: 'text-red-300'     },
-    { bg: 'bg-indigo-900',  text: 'text-indigo-300'  },
-    { bg: 'bg-cyan-900',    text: 'text-cyan-300'    },
-  ];
-
-  const index = Math.abs(hash) % colors.length;
-  return { light: colors[index], dark: darkColors[index] };
-}
-
-// Resolves a raw createdBy string (email or full name) to display name
-function resolveDisplayName(raw: string): { firstName: string; fullKey: string } {
-  if (raw.includes('@')) {
-    // Legacy email — use the part before @
-    const username = raw.split('@')[0];
-    return { firstName: username, fullKey: username };
-  }
-  // Full name — first word only for display, full name for color keying
-  return { firstName: raw.split(' ')[0], fullKey: raw };
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface HistoryProps {
   isAdmin: boolean;
 }
 
+// Each entry combines its light classes (base) with its dark classes
+// (dark: variant) into one string, so callers apply both at once and the
+// browser's `.dark` class toggle picks the right one - no JS branching.
 const PERSON_COLOR_PALETTE = [
-  { light: 'bg-purple-100 text-purple-700 border-purple-200', dark: 'bg-purple-900/70 text-purple-300 border-purple-800' },
-  { light: 'bg-blue-100 text-blue-700 border-blue-200', dark: 'bg-blue-900/70 text-blue-300 border-blue-800' },
-  { light: 'bg-emerald-100 text-emerald-700 border-emerald-200', dark: 'bg-emerald-900/70 text-emerald-300 border-emerald-800' },
-  { light: 'bg-amber-100 text-amber-700 border-amber-200', dark: 'bg-amber-900/70 text-amber-300 border-amber-800' },
-  { light: 'bg-rose-100 text-rose-700 border-rose-200', dark: 'bg-rose-900/70 text-rose-300 border-rose-800' },
-  { light: 'bg-cyan-100 text-cyan-700 border-cyan-200', dark: 'bg-cyan-900/70 text-cyan-300 border-cyan-800' },
-  { light: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200', dark: 'bg-fuchsia-900/70 text-fuchsia-300 border-fuchsia-800' },
-  { light: 'bg-orange-100 text-orange-700 border-orange-200', dark: 'bg-orange-900/70 text-orange-300 border-orange-800' },
+  'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/70 dark:text-purple-300 dark:border-purple-800',
+  'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/70 dark:text-blue-300 dark:border-blue-800',
+  'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/70 dark:text-emerald-300 dark:border-emerald-800',
+  'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/70 dark:text-amber-300 dark:border-amber-800',
+  'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/70 dark:text-rose-300 dark:border-rose-800',
+  'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/70 dark:text-cyan-300 dark:border-cyan-800',
+  'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-900/70 dark:text-fuchsia-300 dark:border-fuchsia-800',
+  'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/70 dark:text-orange-300 dark:border-orange-800',
 ];
 
-const getPersonColorClasses = (person: string, darkMode: boolean) => {
+const getPersonColorClasses = (person: string) => {
   const normalized = person.trim().toLowerCase();
   let hash = 0;
 
@@ -103,8 +53,7 @@ const getPersonColorClasses = (person: string, darkMode: boolean) => {
     hash = (hash * 31 + normalized.charCodeAt(i)) >>> 0;
   }
 
-  const paletteEntry = PERSON_COLOR_PALETTE[hash % PERSON_COLOR_PALETTE.length];
-  return darkMode ? paletteEntry.dark : paletteEntry.light;
+  return PERSON_COLOR_PALETTE[hash % PERSON_COLOR_PALETTE.length];
 };
 
 const getChartPoint = (
@@ -236,7 +185,7 @@ export function History({ isAdmin }: HistoryProps) {
   });
 
   return (
-    <div className={`flex-1 min-h-0 w-full overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+    <div className="flex-1 min-h-0 w-full overflow-auto bg-white dark:bg-gray-900">
       <div className="flex flex-col gap-[16px] items-start p-[10px] w-full pb-[80px]">
 
         {/* Header */}
@@ -244,18 +193,16 @@ export function History({ isAdmin }: HistoryProps) {
           <div className="flex items-center justify-between w-full px-4">
             <div className="w-8" />
             <div>
-              <p className={`font-['Segoe_UI'] font-semibold text-[24px] ${darkMode ? 'text-white' : 'text-black'}`}>
+              <p className="font-['Segoe_UI'] font-semibold text-[24px] text-black dark:text-white">
                 History
               </p>
-              <p className={`font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
+              <p className="font-['Segoe_UI'] text-[14px] text-[#4c4c4c] dark:text-gray-300">
                 {sorted.length} total records
               </p>
             </div>
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`px-3 py-2 rounded-lg transition ${
-                darkMode ? 'bg-yellow-500 text-gray-900' : 'bg-gray-200 text-gray-700'
-              }`}
+              className="px-3 py-2 rounded-lg transition bg-gray-200 text-gray-700 dark:bg-yellow-500 dark:text-gray-900"
             >
               {darkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
             </button>
@@ -270,18 +217,20 @@ export function History({ isAdmin }: HistoryProps) {
         <>
 
         {chartData.length > 0 && (
-          <div className={`w-full rounded-[15px] border p-[14px] ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-[#eceef2] bg-white'}`}>
+          <div className="w-full rounded-[15px] border border-[#eceef2] bg-white p-[14px] dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <p className={`font-['Segoe_UI'] text-[13px] font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>
+                <p className="font-['Segoe_UI'] text-[13px] font-semibold text-black dark:text-white">
                   Attendance trend
                 </p>
-                <p className={`font-['Segoe_UI'] text-[12px] ${darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'}`}>
+                <p className="font-['Segoe_UI'] text-[12px] text-[#4c4c4c] dark:text-gray-400">
                   Full history · scroll horizontally to explore
                 </p>
               </div>
             </div>
             <div className="overflow-x-auto pb-2">
+              {/* Hand-rolled SVG chart - stroke/fill are SVG attributes, not
+                  classNames, so darkMode stays JS-level logic here. */}
               <svg width={chartWidth} height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="min-w-[640px]">
                 {[0, 0.25, 0.5, 0.75, 1].map(step => {
                   const y = topPadding + (chartHeight - topPadding - bottomPadding) * (1 - step);
@@ -343,23 +292,19 @@ export function History({ isAdmin }: HistoryProps) {
 
         {/* Search + Filter row */}
         <div className="w-full flex gap-[8px]">
-          <div className={`flex-1 flex items-center gap-[8px] rounded-[10px] px-[12px] py-[10px] ${
-            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-[#f3f4f6] border border-[#eceef2]'
-          }`}>
-            <Search className={`size-4 shrink-0 ${darkMode ? 'text-gray-400' : 'text-[#9ca3af]'}`} />
+          <div className="flex-1 flex items-center gap-[8px] rounded-[10px] px-[12px] py-[10px] border border-[#eceef2] bg-[#f3f4f6] dark:border-gray-700 dark:bg-gray-800">
+            <Search className="size-4 shrink-0 text-[#9ca3af] dark:text-gray-400" />
             <SmoothInput
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by date, count, or event…"
-              className={`flex-1 bg-transparent font-['Segoe_UI'] text-[14px] ${
-                darkMode ? 'text-white placeholder-gray-500' : 'text-black placeholder-[#9ca3af]'
-              }`}
+              className="flex-1 bg-transparent font-['Segoe_UI'] text-[14px] text-black placeholder-[#9ca3af] dark:text-white dark:placeholder-gray-500"
               wrapperClassName="flex-1 border-0 bg-transparent p-0"
             />
             {search && (
               <button onClick={() => setSearch('')}>
-                <X className={`size-4 ${darkMode ? 'text-gray-400' : 'text-[#9ca3af]'}`} />
+                <X className="size-4 text-[#9ca3af] dark:text-gray-400" />
               </button>
             )}
           </div>
@@ -369,8 +314,8 @@ export function History({ isAdmin }: HistoryProps) {
             onClick={() => setShowFilters(v => !v)}
             className={`relative flex items-center gap-[6px] px-[14px] rounded-[10px] border transition ${
               showFilters
-                ? darkMode ? 'bg-blue-600 border-blue-600 text-white' : 'bg-[#000124] border-[#000124] text-white'
-                : darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-[#f3f4f6] border-[#eceef2] text-[#4c4c4c]'
+                ? 'bg-[#000124] border-[#000124] text-white dark:bg-blue-600 dark:border-blue-600'
+                : 'bg-[#f3f4f6] border-[#eceef2] text-[#4c4c4c] dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'
             }`}
           >
             <Filter className="size-4" />
@@ -385,9 +330,7 @@ export function History({ isAdmin }: HistoryProps) {
           {/* Sort toggle */}
           <button
             onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
-            className={`flex items-center gap-[4px] px-[14px] rounded-[10px] border transition ${
-              darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-[#f3f4f6] border-[#eceef2] text-[#4c4c4c]'
-            }`}
+            className="flex items-center gap-[4px] px-[14px] rounded-[10px] border border-[#eceef2] bg-[#f3f4f6] text-[#4c4c4c] transition dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
           >
             {sortDir === 'desc'
               ? <ChevronDown className="size-4" />
@@ -398,22 +341,16 @@ export function History({ isAdmin }: HistoryProps) {
 
         {/* Filter panel */}
         {showFilters && (
-          <div className={`w-full rounded-[12px] border p-[16px] flex flex-col gap-[12px] ${
-            darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#eceef2]'
-          }`}>
+          <div className="w-full rounded-[12px] border border-[#eceef2] bg-white p-[16px] flex flex-col gap-[12px] dark:border-gray-700 dark:bg-gray-800">
             {/* Church Event filter */}
             <div>
-              <label className={`font-['Segoe_UI'] text-[12px] block mb-[6px] ${
-                darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'
-              }`}>
+              <label className="font-['Segoe_UI'] text-[12px] block mb-[6px] text-[#4c4c4c] dark:text-gray-400">
                 Church Event
               </label>
               <select
                 value={filterEvent}
                 onChange={e => setFilterEvent(e.target.value as ChurchEvent | 'All')}
-                className={`w-full rounded-[8px] px-[10px] py-[8px] font-['Segoe_UI'] text-[13px] outline-none ${
-                  darkMode ? 'bg-gray-700 text-white' : 'bg-[#f3f4f6] text-black'
-                }`}
+                className="w-full rounded-[8px] px-[10px] py-[8px] font-['Segoe_UI'] text-[13px] outline-none bg-[#f3f4f6] text-black dark:bg-gray-700 dark:text-white"
               >
                 <option value="All">All Events</option>
                 {CHURCH_EVENTS.map(ev => (
@@ -424,9 +361,7 @@ export function History({ isAdmin }: HistoryProps) {
 
             {/* Fast Sunday filter */}
             <div>
-              <label className={`font-['Segoe_UI'] text-[12px] block mb-[6px] ${
-                darkMode ? 'text-gray-400' : 'text-[#4c4c4c]'
-              }`}>
+              <label className="font-['Segoe_UI'] text-[12px] block mb-[6px] text-[#4c4c4c] dark:text-gray-400">
                 Fast Sunday
               </label>
               <div className="flex gap-[8px]">
@@ -436,8 +371,8 @@ export function History({ isAdmin }: HistoryProps) {
                     onClick={() => setFilterFast(opt)}
                     className={`flex-1 py-[8px] rounded-[8px] font-['Segoe_UI'] text-[13px] transition ${
                       filterFast === opt
-                        ? darkMode ? 'bg-blue-600 text-white' : 'bg-[#000124] text-white'
-                        : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-[#f3f4f6] text-[#4c4c4c]'
+                        ? 'bg-[#000124] text-white dark:bg-blue-600'
+                        : 'bg-[#f3f4f6] text-[#4c4c4c] dark:bg-gray-700 dark:text-gray-300'
                     }`}
                   >
                     {opt}
@@ -459,18 +394,16 @@ export function History({ isAdmin }: HistoryProps) {
         )}
 
         {/* Results count */}
-        <p className={`font-['Segoe_UI'] text-[12px] px-1 ${darkMode ? 'text-gray-400' : 'text-[#9ca3af]'}`}>
+        <p className="font-['Segoe_UI'] text-[12px] px-1 text-[#9ca3af] dark:text-gray-400">
           Showing {filtered.length} of {sorted.length} records
         </p>
 
         {/* Records list */}
-        <div className={`w-full rounded-[15px] border-2 overflow-hidden ${
-          darkMode ? 'border-gray-700 bg-gray-800' : 'border-[#eceef2] bg-white'
-        }`}>
+        <div className="w-full rounded-[15px] border-2 overflow-hidden border-[#eceef2] bg-white dark:border-gray-700 dark:bg-gray-800">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-[60px] gap-3">
-              <Calendar className={`size-10 ${darkMode ? 'text-gray-600' : 'text-[#e5e7eb]'}`} />
-              <p className={`font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-gray-400' : 'text-[#9ca3af]'}`}>
+              <Calendar className="size-10 text-[#e5e7eb] dark:text-gray-600" />
+              <p className="font-['Segoe_UI'] text-[14px] text-[#9ca3af] dark:text-gray-400">
                 No records found
               </p>
             </div>
@@ -482,16 +415,12 @@ export function History({ isAdmin }: HistoryProps) {
               return (
                 <div
                   key={entry.id}
-                  className={`${
-                    index !== filtered.length - 1
-                      ? darkMode ? 'border-b border-gray-700' : 'border-b border-[#eceef2]'
-                      : ''
-                  }`}
+                  className={index !== filtered.length - 1 ? 'border-b border-[#eceef2] dark:border-gray-700' : ''}
                 >
                   {isEditing ? (
                     /* ── Edit mode ── */
                     <div className="p-[16px] flex flex-col gap-[10px]">
-                      <p className={`font-['Segoe_UI'] text-[13px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
+                      <p className="font-['Segoe_UI'] text-[13px] text-[#4c4c4c] dark:text-gray-300">
                         Editing {format(new Date(entry.date + 'T12:00:00'), 'MMMM d, yyyy')}
                       </p>
 
@@ -500,7 +429,7 @@ export function History({ isAdmin }: HistoryProps) {
                         type="number"
                         value={editAttendance}
                         onChange={e => setEditAttendance(e.target.value)}
-                        className={`font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-white' : 'text-black'}`}
+                        className="font-['Segoe_UI'] text-[14px] text-black dark:text-white"
                         wrapperClassName="w-full p-0"
                       />
 
@@ -508,9 +437,7 @@ export function History({ isAdmin }: HistoryProps) {
                       <select
                         value={editEvent}
                         onChange={e => setEditEvent(e.target.value as ChurchEvent)}
-                        className={`w-full rounded-[8px] px-[10px] py-[8px] font-['Segoe_UI'] text-[13px] outline-none ${
-                          darkMode ? 'bg-gray-700 text-white' : 'bg-[#f3f4f6] text-black'
-                        }`}
+                        className="w-full rounded-[8px] px-[10px] py-[8px] font-['Segoe_UI'] text-[13px] outline-none bg-[#f3f4f6] text-black dark:bg-gray-700 dark:text-white"
                       >
                         {CHURCH_EVENTS.map(ev => (
                           <option key={ev} value={ev}>{ev}</option>
@@ -522,8 +449,8 @@ export function History({ isAdmin }: HistoryProps) {
                         onClick={() => setEditFast(editFast === 1 ? 0 : 1)}
                         className={`w-full py-[8px] rounded-[8px] font-['Segoe_UI'] text-[13px] transition ${
                           editFast === 1
-                            ? darkMode ? 'bg-blue-600 text-white' : 'bg-[#000124] text-white'
-                            : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-[#f3f4f6] text-[#4c4c4c]'
+                            ? 'bg-[#000124] text-white dark:bg-blue-600'
+                            : 'bg-[#f3f4f6] text-[#4c4c4c] dark:bg-gray-700 dark:text-gray-300'
                         }`}
                       >
                         Fast Sunday: {editFast === 1 ? 'Yes' : 'No'}
@@ -539,9 +466,7 @@ export function History({ isAdmin }: HistoryProps) {
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className={`flex-1 flex items-center justify-center gap-1 py-[8px] rounded-[8px] font-['Segoe_UI'] text-[13px] ${
-                            darkMode ? 'bg-gray-700 text-gray-300' : 'bg-[#f3f4f6] text-[#4c4c4c]'
-                          }`}
+                          className="flex-1 flex items-center justify-center gap-1 py-[8px] rounded-[8px] font-['Segoe_UI'] text-[13px] bg-[#f3f4f6] text-[#4c4c4c] dark:bg-gray-700 dark:text-gray-300"
                         >
                           <X className="size-4" /> Cancel
                         </button>
@@ -549,12 +474,8 @@ export function History({ isAdmin }: HistoryProps) {
                     </div>
                   ) : isConfirmingDelete ? (
                     /* ── Delete confirm ── */
-                    <div className={`p-[16px] flex items-center justify-between gap-[10px] ${
-                      darkMode ? 'bg-red-950' : 'bg-red-50'
-                    }`}>
-                      <p className={`font-['Segoe_UI'] text-[13px] flex-1 ${
-                        darkMode ? 'text-red-300' : 'text-red-600'
-                      }`}>
+                    <div className="p-[16px] flex items-center justify-between gap-[10px] bg-red-50 dark:bg-red-950">
+                      <p className="font-['Segoe_UI'] text-[13px] flex-1 text-red-600 dark:text-red-300">
                         Delete {format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}?
                       </p>
                       <button
@@ -565,9 +486,7 @@ export function History({ isAdmin }: HistoryProps) {
                       </button>
                       <button
                         onClick={() => setDeleteConfirmId(null)}
-                        className={`px-[14px] py-[7px] rounded-[8px] font-['Segoe_UI'] text-[13px] ${
-                          darkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-[#4c4c4c] border border-[#eceef2]'
-                        }`}
+                        className="px-[14px] py-[7px] rounded-[8px] font-['Segoe_UI'] text-[13px] bg-white text-[#4c4c4c] border border-[#eceef2] dark:bg-gray-700 dark:text-gray-300 dark:border-transparent"
                       >
                         Cancel
                       </button>
@@ -576,40 +495,32 @@ export function History({ isAdmin }: HistoryProps) {
                     /* ── Normal row ── */
                     <div className="flex items-center px-[16px] py-[14px] gap-[10px]">
                       <div className="flex-1 min-w-0">
-                        <p className={`font-['Segoe_UI'] text-[14px] ${darkMode ? 'text-white' : 'text-black'}`}>
+                        <p className="font-['Segoe_UI'] text-[14px] text-black dark:text-white">
                           {format(new Date(entry.date + 'T12:00:00'), 'MMMM d, yyyy')}
                         </p>
                         <div className="flex items-center gap-[6px] mt-[2px] flex-wrap">
                           {entry.createdBy && (
-                            <span className={`font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] border ${getPersonColorClasses(entry.createdBy, darkMode)}`}>
+                            <span className={`font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] border ${getPersonColorClasses(entry.createdBy)}`}>
                               Added by {entry.createdBy.split('@')[0]}
                             </span>
                           )}
                           {entry.churchEvent !== 'None' && (
-                            <span className={`font-['Segoe_UI'] text-[11px] px-[6px] py-[2px] rounded-[4px] ${
-                              darkMode ? 'bg-gray-700 text-gray-300' : 'bg-[#eceef2] text-[#4c4c4c]'
-                            }`}>
+                            <span className="font-['Segoe_UI'] text-[11px] px-[6px] py-[2px] rounded-[4px] bg-[#eceef2] text-[#4c4c4c] dark:bg-gray-700 dark:text-gray-300">
                               {entry.churchEvent}
                             </span>
                           )}
                           {entry.isFastSunday === 1 && (
-                            <span className={`font-['Segoe_UI'] text-[11px] px-[6px] py-[2px] rounded-[4px] ${
-                              darkMode ? 'bg-blue-900 text-blue-300' : 'bg-[#000124] text-white'
-                            }`}>
+                            <span className="font-['Segoe_UI'] text-[11px] px-[6px] py-[2px] rounded-[4px] bg-[#000124] text-white dark:bg-blue-900 dark:text-blue-300">
                               Fast
                             </span>
                           )}
                           {entry.isSummer === 1 && (
-                            <span className={`font-['Segoe_UI'] text-[11px] px-[6px] py-[2px] rounded-[4px] ${
-                              darkMode ? 'bg-yellow-900 text-yellow-300' : 'bg-yellow-100 text-yellow-700'
-                            }`}>
+                            <span className="font-['Segoe_UI'] text-[11px] px-[6px] py-[2px] rounded-[4px] bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
                               Summer
                             </span>
                           )}
                           {entry.averagedFrom && entry.averagedFrom.length > 0 && (
-                            <span className={`font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] ${
-                              darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'
-                            }`}>
+                            <span className="font-['Segoe_UI'] text-[10px] px-[6px] py-[2px] rounded-[4px] bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
                               Averaged
                             </span>
                           )}
@@ -617,11 +528,11 @@ export function History({ isAdmin }: HistoryProps) {
 
                         {/* ── Averaged breakdown ── */}
                         {entry.averagedFrom && entry.averagedFrom.length > 0 && (
-                          <div className={`mt-[8px] text-[11px] ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <div className="mt-[8px] text-[11px] text-gray-600 dark:text-gray-400">
                             <p className="font-semibold mb-[2px]">Averaged from:</p>
                             {entry.averagedFrom.map((contrib, idx) => (
                               <p key={idx} className="ml-[4px]">
-                                <span className={`mr-[6px] rounded-[4px] border px-[6px] py-[2px] ${getPersonColorClasses(contrib.email, darkMode)}`}>
+                                <span className={`mr-[6px] rounded-[4px] border px-[6px] py-[2px] ${getPersonColorClasses(contrib.email)}`}>
                                   {contrib.email.split('@')[0]}
                                 </span>
                                 {contrib.attendance}
@@ -631,9 +542,7 @@ export function History({ isAdmin }: HistoryProps) {
                         )}
                       </div>
 
-                      <p className={`font-['Segoe_UI'] text-[20px] font-light shrink-0 ${
-                        darkMode ? 'text-white' : 'text-black'
-                      }`}>
+                      <p className="font-['Segoe_UI'] text-[20px] font-light shrink-0 text-black dark:text-white">
                         {entry.attendance}
                       </p>
 
@@ -642,17 +551,13 @@ export function History({ isAdmin }: HistoryProps) {
                         <div className="flex items-center gap-[6px] shrink-0">
                           <button
                             onClick={() => startEdit(entry)}
-                            className={`p-[7px] rounded-[8px] transition ${
-                              darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-[#f3f4f6] text-[#4c4c4c] hover:bg-[#eceef2]'
-                            }`}
+                            className="p-[7px] rounded-[8px] transition bg-[#f3f4f6] text-[#4c4c4c] hover:bg-[#eceef2] dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                           >
                             <Pencil className="size-3.5" />
                           </button>
                           <button
                             onClick={() => setDeleteConfirmId(entry.id)}
-                            className={`p-[7px] rounded-[8px] transition ${
-                              darkMode ? 'bg-gray-700 text-red-400 hover:bg-red-950' : 'bg-[#f3f4f6] text-[#ef4444] hover:bg-red-50'
-                            }`}
+                            className="p-[7px] rounded-[8px] transition bg-[#f3f4f6] text-[#ef4444] hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-red-950"
                           >
                             <Trash2 className="size-3.5" />
                           </button>
