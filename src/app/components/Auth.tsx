@@ -5,6 +5,7 @@ import { SmoothInput } from './ui/input';
 import { Card } from './ui/card';
 import { Alert } from './ui/alert';
 import { Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AuthProps {
   user: any;
@@ -32,7 +33,7 @@ export function Auth({ user, onAuthChange }: AuthProps) {
         if (candidateUser?.id && fullName.trim()) {
           await saveUserProfile(fullName, candidateUser.id);
         }
-        alert('Check your email to confirm signup!');
+        toast.success('Check your email to confirm signup!');
       } else {
         const { error: err } = await signIn(email, password);
         if (err) throw err;

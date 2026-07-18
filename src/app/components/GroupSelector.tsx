@@ -63,11 +63,6 @@ export function GroupSelector({ user, isAdmin, onGroupSelected, onAuthChange }: 
         return;
       }
 
-      if (!group) {
-        setError('The selected group could not be loaded.');
-        return;
-      }
-
       await joinGroup(user.id, group.id);
       onGroupSelected(group);
     } catch (err: any) {

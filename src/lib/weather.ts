@@ -67,26 +67,3 @@ export async function fetchWeatherForDate(d: Date): Promise<WeatherData | null> 
     };
   }
 }
-
-/**
- * Convert weather data to features for the ML model
- */
-export function weatherToFeatures(weather: WeatherData | null) {
-  if (!weather) {
-    return {
-      temp_high: 0,
-      temp_low: 0,
-      rainfall: 0,
-      snowfall: 0,
-      is_rainy: 0,
-      is_snowy: 0,
-    };
-  }
-
-  return {
-    low_temp: weather.low_temp,
-  high_temp: weather.high_temp,
-  rainfall: weather.rainfall,
-  snowfall: weather.snowfall
-  };
-}

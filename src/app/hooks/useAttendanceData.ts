@@ -116,6 +116,15 @@ export function toFeatureVector(e: Omit<AttendanceEntry, 'id'>): number[] {
   ];
 }
 
+/**
+ * Returns ceil(day-of-year / 7), a simple week index used as a model
+ * feature and in the UI - not ISO-8601 week numbering (which anchors
+ * week 1 to the first Thursday of the year and can differ by a week at
+ * year boundaries). Not changed to true ISO weeks because the Random
+ * Forest already trains on this exact numbering; switching formulas
+ * would silently change what "week" means to already-trained models
+ * without retraining, which is a larger change than a labeling fix.
+ */
 export function getWeekOfYear(date: Date): number {
   const start = new Date(date.getFullYear(), 0, 1);
   const dayOfYear =
