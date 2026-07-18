@@ -3,8 +3,7 @@
  * Uses Open-Meteo to get weather data for a specific date (past or future).
  */
 
-const DEFAULT_LAT = 39.852285881165265;
-const DEFAULT_LON = -86.33698522806094;
+import { WEATHER_LOCATION, WEATHER_DEFAULTS } from '../config';
 
 export interface WeatherData {
   low_temp: number;
@@ -36,8 +35,8 @@ export async function fetchWeatherForDate(d: Date): Promise<WeatherData | null> 
         : 'https://api.open-meteo.com/v1/forecast';
 
     const url =
-      `${base}?latitude=${DEFAULT_LAT}` +
-      `&longitude=${DEFAULT_LON}` +
+      `${base}?latitude=${WEATHER_LOCATION.latitude}` +
+      `&longitude=${WEATHER_LOCATION.longitude}` +
       `&start_date=${ymd}` +
       `&end_date=${ymd}` +
       `&daily=${DAILY_VARS}` +
@@ -61,10 +60,10 @@ export async function fetchWeatherForDate(d: Date): Promise<WeatherData | null> 
   } catch (error) {
     console.error("Error fetching weather data:", error);
     return {
-      high_temp: 65,
-      low_temp: 55,
-      rainfall: 0,
-      snowfall: 0,
+      high_temp: WEATHER_DEFAULTS.highTemp,
+      low_temp: WEATHER_DEFAULTS.lowTemp,
+      rainfall: WEATHER_DEFAULTS.rainfall,
+      snowfall: WEATHER_DEFAULTS.snowfall,
     };
   }
 }

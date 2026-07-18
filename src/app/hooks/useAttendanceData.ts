@@ -8,6 +8,7 @@ import {
 import { RandomForestClient } from '../workers/randomForestClient';
 import { supabase, getCurrentUserFullName } from '../../lib/supabase';
 import { fetchWeatherForDate } from '../../lib/weather';
+import { WEATHER_DEFAULTS } from '../../config';
 
 export type ChurchEvent =
   | 'None'
@@ -108,10 +109,10 @@ export function toFeatureVector(e: Omit<AttendanceEntry, 'id'>): number[] {
     e.isFastSunday,
     e.month,
     e.week,
-    e.high_temp || 65,
-    e.low_temp || 55,
-    e.rainfall || 0,
-    e.snowfall || 0,
+    e.high_temp || WEATHER_DEFAULTS.highTemp,
+    e.low_temp || WEATHER_DEFAULTS.lowTemp,
+    e.rainfall || WEATHER_DEFAULTS.rainfall,
+    e.snowfall || WEATHER_DEFAULTS.snowfall,
   ];
 }
 
@@ -214,18 +215,18 @@ export function computeNextWeekFeatures(
   const avgHighTemp =
     recentWeather.length > 0
       ? Math.round(
-          recentWeather.reduce((sum, e) => sum + (e.high_temp || 65), 0) /
+          recentWeather.reduce((sum, e) => sum + (e.high_temp || WEATHER_DEFAULTS.highTemp), 0) /
             recentWeather.length
         )
-      : 65;
+      : WEATHER_DEFAULTS.highTemp;
 
   const avgLowTemp =
     recentWeather.length > 0
       ? Math.round(
-          recentWeather.reduce((sum, e) => sum + (e.low_temp || 55), 0) /
+          recentWeather.reduce((sum, e) => sum + (e.low_temp || WEATHER_DEFAULTS.lowTemp), 0) /
             recentWeather.length
         )
-      : 55;
+      : WEATHER_DEFAULTS.lowTemp;
 
   const avgRainfall =
     recentWeather.length > 0
@@ -718,8 +719,8 @@ export function useAttendanceData(groupId: string | null) {
       is_holiday_season: raw.isHolidaySeason,
       church_event: raw.churchEvent,
       is_fast_sunday: raw.isFastSunday,
-      high_temp: weather?.high_temp || 65,
-      low_temp: weather?.low_temp || 55,
+      high_temp: weather?.high_temp || WEATHER_DEFAULTS.highTemp,
+      low_temp: weather?.low_temp || WEATHER_DEFAULTS.lowTemp,
       rainfall: weather?.rainfall || 0,
       snowfall: weather?.snowfall || 0,
       created_by: fullName,
@@ -746,8 +747,8 @@ export function useAttendanceData(groupId: string | null) {
       isHolidaySeason: raw.isHolidaySeason,
       churchEvent: raw.churchEvent,
       isFastSunday: raw.isFastSunday,
-      high_temp: weather?.high_temp || 65,
-      low_temp: weather?.low_temp || 55,
+      high_temp: weather?.high_temp || WEATHER_DEFAULTS.highTemp,
+      low_temp: weather?.low_temp || WEATHER_DEFAULTS.lowTemp,
       rainfall: weather?.rainfall || 0,
       snowfall: weather?.snowfall || 0,
       groupId,

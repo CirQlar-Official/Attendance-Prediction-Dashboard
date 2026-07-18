@@ -1,5 +1,7 @@
 // ─── Random Forest Regressor (Pure TypeScript) ──────────────────────────────
 
+import { RANDOM_FOREST_CONFIG, CONFIDENCE_THRESHOLDS } from '../../config';
+
 export interface TreeNode {
   isLeaf: boolean;
   value?: number;
@@ -166,10 +168,10 @@ export interface RFResult {
 export function trainRandomForest(
   X: number[][],
   y: number[],
-  nTrees = 80,
-  maxDepth = 7,
-  minLeaf = 2,
-  seed = 42
+  nTrees: number = RANDOM_FOREST_CONFIG.trees,
+  maxDepth: number = RANDOM_FOREST_CONFIG.maxDepth,
+  minLeaf: number = RANDOM_FOREST_CONFIG.minLeafSize,
+  seed: number = RANDOM_FOREST_CONFIG.seed
 ): Forest {
   if (X.length === 0) return [];
 
@@ -196,8 +198,8 @@ export function predictForest(forest: Forest, x: number[]): RFResult {
   const std = Math.sqrt(variance);
 
   let confidence: 'high' | 'medium' | 'low';
-  if (std < 6) confidence = 'high';
-  else if (std < 12) confidence = 'medium';
+  if (std < CONFIDENCE_THRESHOLDS.high) confidence = 'high';
+  else if (std < CONFIDENCE_THRESHOLDS.medium) confidence = 'medium';
   else confidence = 'low';
 
   return {
