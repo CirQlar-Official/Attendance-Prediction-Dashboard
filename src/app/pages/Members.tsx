@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
-import { useDarkMode } from '../context/DarkModeContext';
 import { getGroupMembersWithDetails, removeUserFromGroup, getCurrentUser, getProfilesForUserIds } from '../../lib/supabase';
 import type { Group } from '../hooks/useAttendanceData';
 import { Users, Key, Trash2, Loader, Sparkles } from 'lucide-react';
@@ -16,7 +15,6 @@ interface MemberRow {
 
 export function Members() {
   const { selectedGroup, isAdmin } = useOutletContext<{ selectedGroup: Group | null; isAdmin: boolean }>();
-  const { darkMode } = useDarkMode();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
@@ -82,9 +80,9 @@ export function Members() {
   };
 
   return (
-    <div className={`min-h-full w-full overflow-auto px-3 py-3 pb-24 sm:px-4 sm:py-4 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className="min-h-full w-full overflow-auto px-3 py-3 pb-24 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-4">
       <div className="mx-auto flex max-w-5xl flex-col gap-4">
-        <div className={`app-shell-card-strong overflow-hidden p-4 sm:p-6`}>
+        <div className="app-shell-card-strong overflow-hidden p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-slate-50/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400">
@@ -93,10 +91,10 @@ export function Members() {
               </div>
               <div>
                 <p className="text-2xl font-semibold tracking-tight">Group members</p>
-                <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>See the join code and the people contributing to {selectedGroup?.name ?? 'your group'}.</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">See the join code and the people contributing to {selectedGroup?.name ?? 'your group'}.</p>
               </div>
             </div>
-            <div className={`flex items-center gap-3 rounded-[24px] border px-4 py-3 ${darkMode ? 'border-cyan-900/60 bg-cyan-950/50 text-cyan-200' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}>
+            <div className="flex items-center gap-3 rounded-[24px] border border-cyan-200 bg-cyan-50 px-4 py-3 text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/50 dark:text-cyan-200">
               <Key className="size-5" />
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] opacity-70">Join code</p>
@@ -106,7 +104,7 @@ export function Members() {
           </div>
         </div>
 
-        <div className={`app-shell-card p-4 sm:p-5`}>
+        <div className="app-shell-card p-4 sm:p-5">
           <div className="mb-4 flex items-center gap-3">
             <Users className="size-5 text-cyan-500" />
             <div>
@@ -126,13 +124,18 @@ export function Members() {
               {members.map(member => {
                 const isCurrentUser = member.user_id === currentUserId;
                 return (
-                  <li key={member.user_id} className={`flex items-center justify-between rounded-[20px] border px-4 py-3 ${darkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-50/70'}`}>
+                  <li key={member.user_id} className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-slate-50/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60">
                     <div>
                       <p className="text-sm font-semibold">{member.full_name || member.email}</p>
-                      <p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Joined {new Date(member.joined_at).toLocaleDateString()}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Joined {new Date(member.joined_at).toLocaleDateString()}</p>
                     </div>
                     {isAdmin && !isCurrentUser && (
-                      <button onClick={() => handleRemoveUser(member.user_id, member.email || 'User')} disabled={removingUserId === member.user_id} className={`rounded-2xl p-2 transition ${removingUserId === member.user_id ? 'cursor-not-allowed opacity-50' : darkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-rose-400' : 'text-slate-500 hover:bg-slate-100 hover:text-rose-600'}`} aria-label={`Remove ${member.email}`}>
+                      <button
+                        onClick={() => handleRemoveUser(member.user_id, member.email || 'User')}
+                        disabled={removingUserId === member.user_id}
+                        className={`rounded-2xl p-2 transition text-slate-500 hover:bg-slate-100 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-rose-400 ${removingUserId === member.user_id ? 'cursor-not-allowed opacity-50' : ''}`}
+                        aria-label={`Remove ${member.email}`}
+                      >
                         {removingUserId === member.user_id ? <Loader className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
                       </button>
                     )}

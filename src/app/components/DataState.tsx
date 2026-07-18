@@ -1,5 +1,4 @@
 import { Alert, AlertDescription } from './ui/alert';
-import { useDarkMode } from '../context/DarkModeContext';
 
 interface DataLoadingStateProps {
   label?: string;
@@ -7,16 +6,10 @@ interface DataLoadingStateProps {
 
 /** Shown in place of a page's data-dependent content while it's first loading. */
 export function DataLoadingState({ label = 'Loading data' }: DataLoadingStateProps) {
-  const { darkMode } = useDarkMode();
-
   return (
-    <div className={`app-shell-card flex flex-col items-center justify-center gap-4 p-10 text-center`}>
-      <div
-        className={`h-10 w-10 animate-spin rounded-full border-4 ${
-          darkMode ? 'border-slate-700 border-t-cyan-400' : 'border-slate-200 border-t-blue-600'
-        }`}
-      />
-      <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+    <div className="app-shell-card flex flex-col items-center justify-center gap-4 p-10 text-center">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600 dark:border-slate-700 dark:border-t-cyan-400" />
+      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
         {label}
       </p>
     </div>

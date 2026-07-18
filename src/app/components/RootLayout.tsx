@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router';
 import { useState, useEffect } from 'react';
 import { getCurrentUser, checkIsAdmin, getUserGroup } from '../../lib/supabase';
-import { useDarkMode } from '../context/DarkModeContext';
 import { BottomNav } from './BottomNav';
 import { Auth } from './Auth';
 import { GroupSelector } from './GroupSelector';
@@ -13,7 +12,6 @@ export function RootLayout() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-  const { darkMode } = useDarkMode();
 
   useEffect(() => {
     const loadUser = async () => {
@@ -76,7 +74,7 @@ export function RootLayout() {
 
   if (loading) {
     return (
-      <div className={`app-page-shell items-center justify-center ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.12),_transparent_55%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900'}`}>
+      <div className="app-page-shell items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.12),_transparent_55%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900 dark:bg-none dark:bg-slate-950 dark:text-slate-100">
         <div className="text-center">
           <div className="mx-auto mb-4 h-14 w-14 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Loading CAST</p>
@@ -87,7 +85,7 @@ export function RootLayout() {
 
   if (!user) {
     return (
-      <div className={`app-page-shell ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.14),_transparent_55%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900'}`}>
+      <div className="app-page-shell bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.14),_transparent_55%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900 dark:bg-none dark:bg-slate-950 dark:text-slate-100">
         <Toaster />
         <div className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
           <Auth user={user} onAuthChange={handleAuthChange} />
@@ -98,7 +96,7 @@ export function RootLayout() {
 
   if (!selectedGroup) {
     return (
-      <div className={`app-page-shell ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.12),_transparent_55%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900'}`}>
+      <div className="app-page-shell bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.12),_transparent_55%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900 dark:bg-none dark:bg-slate-950 dark:text-slate-100">
         <Toaster />
         <GroupSelector user={user} isAdmin={isAdmin} onGroupSelected={handleGroupSelected} onAuthChange={handleAuthChange} />
       </div>
@@ -106,11 +104,11 @@ export function RootLayout() {
   }
 
   return (
-    <div className={`app-page-shell flex-col md:flex-row ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900'}`}>
+    <div className="app-page-shell flex-col bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900 dark:bg-none dark:bg-slate-950 dark:text-slate-100 md:flex-row">
       <Toaster />
       <BottomNav isAdmin={isAdmin} onLeaveGroup={handleLeaveGroup} onAuthChange={handleAuthChange} selectedGroup={selectedGroup} />
       <div className="flex-1 min-h-0 min-w-0 overflow-auto pb-[78px] md:pb-0">
-        <Outlet context={{ user, darkMode, isAdmin, selectedGroup }} />
+        <Outlet context={{ user, isAdmin, selectedGroup }} />
       </div>
     </div>
   );
