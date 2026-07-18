@@ -9,6 +9,7 @@ import {
   autoIsHoliday,
   isFastSundayDate,
   getWeekOfYear,
+  computeNextWeekLagSummary,
   type ChurchEvent,
 } from '../hooks/useAttendanceData';
 import { format, nextSunday as getNextSunday } from 'date-fns';
@@ -239,23 +240,14 @@ export function Forecast() {
             <h2 className="mt-1 text-lg font-semibold">Model inputs for next week</h2>
           </div>
           {sorted.length >= 1 && (() => {
-            const n = sorted.length;
-            const lag1 = sorted[n - 1].attendance;
-            const lag4 = n >= 4 ? sorted[n - 4].attendance : 0;
-            const last4 = sorted.slice(-4).map(e => e.attendance);
-            const roll4 = last4.length
-              ? Math.round(last4.reduce((a, b) => a + b, 0) / last4.length)
-              : 0;
-            const lag2 = n >= 2 ? sorted[n - 2].attendance : 0;
-            const delta1 = lag1 - lag2;
-            const delta4approx = lag1 - lag4;
+            const { lag1, lag4, roll4, delta1, delta4 } = computeNextWeekLagSummary(sorted);
 
             const rows = [
               { label: 'Lag 1 (last week)', value: lag1 },
               { label: 'Lag 4 (4 weeks ago)', value: lag4 },
-              { label: 'Roll 4 (4-week avg)', value: roll4 },
+              { label: 'Roll 4 (4-week avg)', value: Math.round(roll4) },
               { label: 'Delta 1 (lag1 − lag2)', value: delta1, signed: true },
-              { label: 'Delta 4 approx (lag1 − lag4)', value: delta4approx, signed: true },
+              { label: 'Delta 4 approx (lag1 − lag4)', value: delta4, signed: true },
               { label: 'Month', value: nextMonth },
               { label: 'Week of Year', value: nextWeek },
             ];

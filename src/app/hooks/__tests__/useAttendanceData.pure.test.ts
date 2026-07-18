@@ -6,6 +6,7 @@ import {
   getWeekOfYear,
   computeLagFeatures,
   computeNextWeekFeatures,
+  computeNextWeekLagSummary,
   toFeatureVector,
   type AttendanceEntry,
 } from '../useAttendanceData';
@@ -148,6 +149,42 @@ describe('computeNextWeekFeatures', () => {
     const vec = computeNextWeekFeatures([entry], context);
     const staticVec = toFeatureVector(entry);
     expect(vec.length).toBe(staticVec.length);
+  });
+
+  it('embeds the same lag/delta values as computeNextWeekLagSummary', () => {
+    const sorted = [80, 85, 90, 95, 100].map((attendance, i) =>
+      makeEntry({ attendance, date: `2026-01-0${i + 4}` })
+    );
+    const summary = computeNextWeekLagSummary(sorted);
+    const vec = computeNextWeekFeatures(sorted, context);
+
+    // vector layout: [lag1, lag4, roll4, delta1, delta4, ...context]
+    expect(vec[0]).toBe(summary.lag1);
+    expect(vec[1]).toBe(summary.lag4);
+    expect(vec[2]).toBe(summary.roll4);
+    expect(vec[3]).toBe(summary.delta1);
+    expect(vec[4]).toBe(summary.delta4);
+  });
+});
+
+describe('computeNextWeekLagSummary', () => {
+  it('returns zeros when there is no history', () => {
+    expect(computeNextWeekLagSummary([])).toEqual({
+      lag1: 0,
+      lag4: 0,
+      roll4: 0,
+      delta1: 0,
+      delta4: 0,
+    });
+  });
+
+  it('approximates delta4 from the most recent known value (lag1 - lag4), unlike computeLagFeatures', () => {
+    const sorted = [80, 85, 90, 95].map((attendance, i) =>
+      makeEntry({ attendance, date: `2026-01-0${i + 4}` })
+    );
+    const summary = computeNextWeekLagSummary(sorted);
+    // lag1 = 95 (most recent), lag4 = 80 (4th-from-last)
+    expect(summary.delta4).toBe(95 - 80);
   });
 });
 

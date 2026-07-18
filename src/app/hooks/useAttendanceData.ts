@@ -163,17 +163,22 @@ export function computeLagFeatures(
   return { lag1, lag4, roll4, delta1, delta4 };
 }
 
-export function computeNextWeekFeatures(
-  sorted: AttendanceEntry[],
-  nextContext: {
-    isSummer: 0 | 1;
-    isHolidaySeason: 0 | 1;
-    churchEvent: ChurchEvent;
-    isFastSunday: 0 | 1;
-    month: number;
-    week: number;
-  }
-): number[] {
+/**
+ * Lag/roll/delta figures for a not-yet-known next week, derived from
+ * history alone (unlike computeLagFeatures, which also has the actual
+ * new attendance value once a record is being saved - so its delta4 is
+ * exact rather than an approximation from the last known value).
+ * Shared by computeNextWeekFeatures (model input) and the Forecast
+ * page's "model inputs" summary panel, so there is one definition of
+ * "next week's lag features" instead of two.
+ */
+export function computeNextWeekLagSummary(sorted: AttendanceEntry[]): {
+  lag1: number;
+  lag4: number;
+  roll4: number;
+  delta1: number;
+  delta4: number;
+} {
   const n = sorted.length;
   const lag1 = n >= 1 ? sorted[n - 1].attendance : 0;
   const lag4 = n >= 4 ? sorted[n - 4].attendance : 0;
@@ -187,6 +192,22 @@ export function computeNextWeekFeatures(
   const lag2 = n >= 2 ? sorted[n - 2].attendance : 0;
   const delta1 = lag1 - lag2;
   const delta4 = lag1 - lag4;
+
+  return { lag1, lag4, roll4, delta1, delta4 };
+}
+
+export function computeNextWeekFeatures(
+  sorted: AttendanceEntry[],
+  nextContext: {
+    isSummer: 0 | 1;
+    isHolidaySeason: 0 | 1;
+    churchEvent: ChurchEvent;
+    isFastSunday: 0 | 1;
+    month: number;
+    week: number;
+  }
+): number[] {
+  const { lag1, lag4, roll4, delta1, delta4 } = computeNextWeekLagSummary(sorted);
 
   const recentWeather = sorted.slice(-4);
 
