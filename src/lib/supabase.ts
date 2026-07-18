@@ -92,7 +92,7 @@ export async function deleteCurrentAccount(confirmationWord: string) {
   return true;
 }
 
-export async function saveUserProfile(fullName: string, userId?: string, email?: string | null) {
+export async function saveUserProfile(fullName: string, userId?: string) {
   const trimmedName = fullName.trim();
   if (!trimmedName) return null;
 

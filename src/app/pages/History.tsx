@@ -57,12 +57,10 @@ const getPersonColorClasses = (person: string) => {
 };
 
 const getChartPoint = (
-  point: { date: string; attendance: number },
+  point: { attendance: number },
   index: number,
-  chartWidth: number,
   chartHeight: number,
   leftPadding: number,
-  rightPadding: number,
   topPadding: number,
   bottomPadding: number,
   chartStep: number,
@@ -171,10 +169,8 @@ export function History({ isAdmin }: HistoryProps) {
     const { x, y } = getChartPoint(
       point,
       index,
-      chartWidth,
       chartHeight,
       leftPadding,
-      rightPadding,
       topPadding,
       bottomPadding,
       chartStep,
@@ -258,10 +254,8 @@ export function History({ isAdmin }: HistoryProps) {
                   const { x, y } = getChartPoint(
                     point,
                     index,
-                    chartWidth,
                     chartHeight,
                     leftPadding,
-                    rightPadding,
                     topPadding,
                     bottomPadding,
                     chartStep,

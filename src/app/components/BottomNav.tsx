@@ -3,16 +3,13 @@ import { Home, Plus, TrendingUp, Menu, X, Clock, Users, LogOut } from 'lucide-re
 import { useRef, useEffect, useState } from 'react';
 import { leaveGroup } from '../../lib/supabase';
 import { toast } from 'sonner';
-import type { Group } from '../hooks/useAttendanceData';
 
 interface BottomNavProps {
   isAdmin: boolean;
   onLeaveGroup: () => void;
-  onAuthChange: (user: any) => void;
-  selectedGroup: Group | null;
 }
 
-export function BottomNav({ isAdmin, onLeaveGroup, onAuthChange, selectedGroup }: BottomNavProps) {
+export function BottomNav({ isAdmin, onLeaveGroup }: BottomNavProps) {
   const location = useLocation();
   const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [pillStyle, setPillStyle] = useState({ offset: 0, size: 0 });

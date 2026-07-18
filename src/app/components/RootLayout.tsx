@@ -106,7 +106,7 @@ export function RootLayout() {
   return (
     <div className="app-page-shell flex-col bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900 dark:bg-none dark:bg-slate-950 dark:text-slate-100 md:flex-row">
       <Toaster />
-      <BottomNav isAdmin={isAdmin} onLeaveGroup={handleLeaveGroup} onAuthChange={handleAuthChange} selectedGroup={selectedGroup} />
+      <BottomNav isAdmin={isAdmin} onLeaveGroup={handleLeaveGroup} />
       <div className="flex-1 min-h-0 min-w-0 overflow-auto pb-[78px] md:pb-0">
         <Outlet context={{ user, isAdmin, selectedGroup }} />
       </div>

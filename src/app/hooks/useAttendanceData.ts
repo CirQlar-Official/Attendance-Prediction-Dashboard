@@ -412,7 +412,6 @@ export function useAttendanceData(groupId: string | null) {
   const [entries, setEntries] = useState<AttendanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
 
   // A stable id per mounted hook instance. Supabase's realtime client
   // reuses the SAME underlying channel for any two `.channel(topic)`
@@ -427,9 +426,6 @@ export function useAttendanceData(groupId: string | null) {
     const loadData = async () => {
       setLoading(true);
       setError(null);
-
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
 
       if (!groupId) {
         setEntries([]);

@@ -30,7 +30,7 @@ export function Auth({ user, onAuthChange }: AuthProps) {
         if (err) throw err;
         const candidateUser = data.user ?? data.session?.user;
         if (candidateUser?.id && fullName.trim()) {
-          await saveUserProfile(fullName, candidateUser.id, candidateUser.email ?? email);
+          await saveUserProfile(fullName, candidateUser.id);
         }
         alert('Check your email to confirm signup!');
       } else {

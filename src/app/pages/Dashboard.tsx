@@ -2,7 +2,7 @@ import { useAttendanceData, type Group } from '../hooks/useAttendanceData';
 import { useDarkMode } from '../context/DarkModeContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
-import { Sun, Moon, Network} from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { useOutletContext } from 'react-router';
 import { useState, useEffect } from 'react';
 import { DataLoadingState, DataErrorState } from '../components/DataState';
