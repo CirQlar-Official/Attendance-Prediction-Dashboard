@@ -297,6 +297,56 @@ export function mergeContributor(
   return { contributors, attendanceToStore };
 }
 
+export interface FeatureUpdate {
+  id: string;
+  lag1: number;
+  lag4: number;
+  roll4: number;
+  delta1: number;
+  delta4: number;
+}
+
+/**
+ * When an entry's attendance value changes, its own lag/roll/delta
+ * features (derived from what came before it) may now be wrong, and so
+ * may those of any later entry whose lookback window reached back to
+ * it. lag4/roll4 look back at most 4 entries and delta1 at most 2, so
+ * the affected set is always the edited entry itself plus at most the
+ * 4 entries immediately after it in date order - never the rest of
+ * history.
+ *
+ * `sorted` must be in the same chronological order feature computation
+ * elsewhere assumes, and must reflect the OLD attendance value at
+ * `editedId` (i.e. call this before applying the edit locally).
+ */
+export function recomputeForwardFeatures(
+  sorted: AttendanceEntry[],
+  editedId: string,
+  newAttendance: number
+): FeatureUpdate[] {
+  const editedIndex = sorted.findIndex(e => e.id === editedId);
+  if (editedIndex === -1) return [];
+
+  // A working copy of attendance values reflecting the edit, so that
+  // downstream entries' lookback windows see the corrected value at
+  // editedIndex rather than the stale one still in `sorted`.
+  const correctedAttendance = sorted.map(e => e.attendance);
+  correctedAttendance[editedIndex] = newAttendance;
+
+  const updates: FeatureUpdate[] = [];
+  const lastAffectedIndex = Math.min(sorted.length - 1, editedIndex + 4);
+
+  for (let i = editedIndex; i <= lastAffectedIndex; i++) {
+    const history = sorted
+      .slice(0, i)
+      .map((e, idx) => ({ ...e, attendance: correctedAttendance[idx] }));
+    const features = computeLagFeatures(history, correctedAttendance[i]);
+    updates.push({ id: sorted[i].id, ...features });
+  }
+
+  return updates;
+}
+
 /** Maps a raw `attendance_entries` row (snake_case) to the app's AttendanceEntry shape. */
 function mapRowToEntry(row: any): AttendanceEntry {
   return {
@@ -432,7 +482,29 @@ export function useAttendanceData(groupId: string | null) {
   };
 
   const updateEntry = async (id: string, updates: Partial<AttendanceEntry>) => {
-    setEntries(prev => prev.map(e => (e.id === id ? { ...e, ...updates } : e)));
+    const current = sorted.find(e => e.id === id);
+    const attendanceChanged =
+      updates.attendance !== undefined && current !== undefined && updates.attendance !== current.attendance;
+
+    // Changing attendance invalidates this entry's own lag/roll/delta
+    // features (derived from what came before it) and those of any later
+    // entry whose lookback window reached back to it - at most the 4
+    // entries immediately after it. Computed from the pre-edit `sorted`
+    // so every affected row's lookback sees the corrected chain.
+    const forwardUpdates = attendanceChanged
+      ? recomputeForwardFeatures(sorted, id, updates.attendance!)
+      : [];
+    const ownFeatureUpdate = forwardUpdates.find(u => u.id === id);
+    const downstreamUpdates = forwardUpdates.filter(u => u.id !== id);
+
+    setEntries(prev =>
+      prev.map(e => {
+        if (e.id === id) return { ...e, ...updates, ...ownFeatureUpdate };
+        const downstream = downstreamUpdates.find(u => u.id === e.id);
+        return downstream ? { ...e, ...downstream } : e;
+      })
+    );
+
     const query = supabase
       .from('attendance_entries')
       .update({
@@ -441,6 +513,13 @@ export function useAttendanceData(groupId: string | null) {
         is_fast_sunday: updates.isFastSunday,
         is_summer: updates.isSummer,
         is_holiday_season: updates.isHolidaySeason,
+        ...(ownFeatureUpdate && {
+          lag1: ownFeatureUpdate.lag1,
+          lag4: ownFeatureUpdate.lag4,
+          roll4: ownFeatureUpdate.roll4,
+          delta1: ownFeatureUpdate.delta1,
+          delta4: ownFeatureUpdate.delta4,
+        }),
       })
       .eq('id', id);
 
@@ -453,6 +532,37 @@ export function useAttendanceData(groupId: string | null) {
       console.error('Error updating entry:', error);
       const restored = await loadEntriesFromSupabase(groupId);
       setEntries(restored);
+      return;
+    }
+
+    if (downstreamUpdates.length > 0) {
+      const results = await Promise.all(
+        downstreamUpdates.map(u => {
+          const downstreamQuery = supabase
+            .from('attendance_entries')
+            .update({
+              lag1: u.lag1,
+              lag4: u.lag4,
+              roll4: u.roll4,
+              delta1: u.delta1,
+              delta4: u.delta4,
+            })
+            .eq('id', u.id);
+
+          if (groupId) downstreamQuery.eq('group_id', groupId);
+          return downstreamQuery;
+        })
+      );
+
+      const downstreamError = results.find(r => r.error)?.error;
+      if (downstreamError) {
+        // Some downstream rows may now be inconsistent with the edit.
+        // Reload from the server so the UI reflects actual stored state
+        // rather than the optimistic (possibly now-wrong) local values.
+        console.error('Error updating downstream lag features:', downstreamError);
+        const restored = await loadEntriesFromSupabase(groupId);
+        setEntries(restored);
+      }
     }
   };
 

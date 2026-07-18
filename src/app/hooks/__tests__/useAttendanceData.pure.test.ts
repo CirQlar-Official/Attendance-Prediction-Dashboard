@@ -9,6 +9,7 @@ import {
   computeNextWeekLagSummary,
   toFeatureVector,
   mergeContributor,
+  recomputeForwardFeatures,
   type AttendanceEntry,
 } from '../useAttendanceData';
 
@@ -248,5 +249,92 @@ describe('toFeatureVector', () => {
     expect(vec[11]).toBe(72);
     expect(vec[12]).toBe(58);
     expect(vec[13]).toBe(1.2);
+  });
+});
+
+describe('recomputeForwardFeatures', () => {
+  // Six entries: A B C D E F, attendance 100 110 90 95 105 120.
+  function makeHistory() {
+    return [
+      makeEntry({ id: 'A', attendance: 100, date: '2026-01-04' }),
+      makeEntry({ id: 'B', attendance: 110, date: '2026-01-11' }),
+      makeEntry({ id: 'C', attendance: 90, date: '2026-01-18' }),
+      makeEntry({ id: 'D', attendance: 95, date: '2026-01-25' }),
+      makeEntry({ id: 'E', attendance: 105, date: '2026-02-01' }),
+      makeEntry({ id: 'F', attendance: 120, date: '2026-02-08' }),
+    ];
+  }
+
+  it('returns nothing when the id is not found', () => {
+    expect(recomputeForwardFeatures(makeHistory(), 'nonexistent', 999)).toEqual([]);
+  });
+
+  it('recomputes the edited entry plus at most 4 downstream entries', () => {
+    const updates = recomputeForwardFeatures(makeHistory(), 'C', 200);
+    // C, D, E, F = edited + 3 downstream (only 3 exist after C in a 6-entry list)
+    expect(updates.map(u => u.id)).toEqual(['C', 'D', 'E', 'F']);
+  });
+
+  it('does not touch entries before the edited one', () => {
+    const updates = recomputeForwardFeatures(makeHistory(), 'C', 200);
+    expect(updates.find(u => u.id === 'A')).toBeUndefined();
+    expect(updates.find(u => u.id === 'B')).toBeUndefined();
+  });
+
+  it("recomputes the edited entry's own features from its unaffected predecessors", () => {
+    const updates = recomputeForwardFeatures(makeHistory(), 'C', 200);
+    const cUpdate = updates.find(u => u.id === 'C')!;
+    // C's history is just [A(100), B(110)] - unaffected by the edit to C itself.
+    expect(cUpdate.lag1).toBe(110); // B
+    expect(cUpdate.delta4).toBe(200 - 0); // lag4 unavailable (n<4), so delta4 = newAttendance - 0
+  });
+
+  it("propagates the corrected value into downstream entries' lag1", () => {
+    const updates = recomputeForwardFeatures(makeHistory(), 'C', 200);
+    const dUpdate = updates.find(u => u.id === 'D')!;
+    // D's lag1 should reflect C's NEW value (200), not the stale 90.
+    expect(dUpdate.lag1).toBe(200);
+  });
+
+  it("propagates the corrected value into roll4 further downstream", () => {
+    const updates = recomputeForwardFeatures(makeHistory(), 'C', 200);
+    const fUpdate = updates.find(u => u.id === 'F')!;
+    // F's history (corrected) is [A100, B110, C200, D95, E105] (5 entries);
+    // lag4 = 4th-from-last = history[1] = B's 110 (C's corrected 200 is
+    // history[2], one position short of the lag4 lookback at this distance).
+    expect(fUpdate.lag4).toBe(110);
+    // roll4 = avg of the last 4 of that history = [B110, C200, D95, E105]
+    expect(fUpdate.roll4).toBeCloseTo((110 + 200 + 95 + 105) / 4, 2);
+  });
+
+  it("propagates the corrected value into a downstream entry's lag4 when it is exactly 4 positions later", () => {
+    const updates = recomputeForwardFeatures(makeHistory(), 'C', 200);
+    const eUpdate = updates.find(u => u.id === 'E')!;
+    // E's history (corrected) is [A100, B110, C200, D95] (4 entries);
+    // lag4 = 4th-from-last = history[0] = A's 100, not C - lag4 only
+    // reaches exactly 4 entries back, and C is 3 entries back from E.
+    expect(eUpdate.lag4).toBe(100);
+    // But roll4 (avg of the last 4) does include C's corrected value.
+    expect(eUpdate.roll4).toBeCloseTo((100 + 110 + 200 + 95) / 4, 2);
+  });
+
+  it('when editing the very last entry, only that entry is recomputed', () => {
+    const updates = recomputeForwardFeatures(makeHistory(), 'F', 300);
+    expect(updates.map(u => u.id)).toEqual(['F']);
+  });
+
+  it('matches computeLagFeatures exactly for a from-scratch computation on the same corrected history', () => {
+    const history = makeHistory();
+    const updates = recomputeForwardFeatures(history, 'C', 200);
+    const dUpdate = updates.find(u => u.id === 'D')!;
+
+    // Manually build the corrected history up to D and compute independently.
+    const correctedUpToD = [
+      makeEntry({ id: 'A', attendance: 100 }),
+      makeEntry({ id: 'B', attendance: 110 }),
+      makeEntry({ id: 'C', attendance: 200 }),
+    ];
+    const expected = computeLagFeatures(correctedUpToD, 95);
+    expect(dUpdate).toEqual({ id: 'D', ...expected });
   });
 });
