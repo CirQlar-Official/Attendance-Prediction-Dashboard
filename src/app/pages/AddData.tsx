@@ -14,11 +14,12 @@ import {
 import { toast } from 'sonner';
 import { Info, Sun, Moon, CalendarDays, CirclePlus } from 'lucide-react';
 import { Input } from '../components/ui/input';
+import { DataErrorState } from '../components/DataState';
 
 export function AddData() {
   const navigate = useNavigate();
   const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
-  const { sorted, addEntry } = useAttendanceData(selectedGroup?.id ?? null);
+  const { sorted, loading, error, addEntry } = useAttendanceData(selectedGroup?.id ?? null);
   const { darkMode, setDarkMode } = useDarkMode();
 
   const [date, setDate] = useState('');
@@ -139,6 +140,10 @@ export function AddData() {
           </div>
         </div>
 
+        {error && (
+          <DataErrorState message={`${error} Lag/roll/delta previews below may be inaccurate until history loads.`} />
+        )}
+
         <div className="app-shell-card p-4 sm:p-6">
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-4">
@@ -231,7 +236,7 @@ export function AddData() {
                       {
                         label: 'Training rows',
                         value: sorted.length,
-                        desc: 'in model',
+                        desc: loading ? 'loading history' : 'in model',
                       },
                     ].map(({ label, value, desc, signed }) => (
                       <div key={label} className={`rounded-2xl border p-3 ${darkMode ? 'border-slate-800 bg-slate-800/70' : 'border-slate-200 bg-white'}`}>
@@ -248,7 +253,7 @@ export function AddData() {
                           }
                         >
                           {signed && value > 0 ? '+' : ''}
-                          {value}
+                          {label === 'Training rows' && loading ? '…' : value}
                         </p>
                         <p className={`mt-0.5 text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{desc}</p>
                       </div>

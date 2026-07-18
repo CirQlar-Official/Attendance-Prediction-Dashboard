@@ -23,6 +23,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { Input, SmoothInput } from '../components/ui/input';
+import { DataLoadingState, DataErrorState } from '../components/DataState';
 
 // ─── Color utility ────────────────────────────────────────────────────────────
 
@@ -127,7 +128,7 @@ const getChartPoint = (
 
 export function History({ isAdmin }: HistoryProps) {
   const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
-  const { sorted, deleteEntry, updateEntry } = useAttendanceData(selectedGroup?.id ?? null);
+  const { sorted, loading, error, deleteEntry, updateEntry } = useAttendanceData(selectedGroup?.id ?? null);
   const { darkMode, setDarkMode } = useDarkMode();
 
   const [search, setSearch] = useState('');
@@ -260,6 +261,13 @@ export function History({ isAdmin }: HistoryProps) {
             </button>
           </div>
         </div>
+
+        {loading ? (
+          <DataLoadingState label="Loading history" />
+        ) : error ? (
+          <DataErrorState message={error} />
+        ) : (
+        <>
 
         {chartData.length > 0 && (
           <div className={`w-full rounded-[15px] border p-[14px] ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-[#eceef2] bg-white'}`}>
@@ -657,6 +665,8 @@ export function History({ isAdmin }: HistoryProps) {
             })
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );

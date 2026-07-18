@@ -5,11 +5,12 @@ import { format } from 'date-fns';
 import { Sun, Moon, Network} from 'lucide-react';
 import { useOutletContext } from 'react-router';
 import { useState, useEffect } from 'react';
+import { DataLoadingState, DataErrorState } from '../components/DataState';
 
 export function Dashboard() {
   const { selectedGroup, isAdmin } = useOutletContext<{ selectedGroup: Group | null; isAdmin: boolean }>();
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-  const { sorted, getStats } = useAttendanceData(selectedGroup?.id ?? null);
+  const { sorted, loading, error, getStats } = useAttendanceData(selectedGroup?.id ?? null);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
@@ -59,72 +60,80 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 p-6 text-white shadow-[0_25px_70px_-30px_rgba(37,99,235,0.65)]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-50/80">Most recent attendance</p>
-                <p className="mt-3 text-5xl font-semibold sm:text-6xl">{stats?.current ?? 0}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            {metricCards.map(card => (
-              <div key={card.label} className={`app-shell-card rounded-[22px] border p-4 ${darkMode ? 'border-slate-800 bg-slate-900/70' : 'border-slate-200 bg-white/80'}`}>
-                <div className={`rounded-2xl bg-gradient-to-br ${card.accent} p-3`}>
-                  <p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{card.label}</p>
-                  <p className="mt-2 text-2xl font-semibold">{card.value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className={`app-shell-card p-4 sm:p-5`}>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="app-section-label">Trend</p>
-              <h2 className="mt-1 text-lg font-semibold">Attendance trend</h2>
-            </div>
-            <span className="app-pill">Last {chartData.length} updates</span>
-          </div>
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#e2e8f0'} />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: darkMode ? '#94a3b8' : '#64748b' }} stroke={darkMode ? '#334155' : '#cbd5e1'} />
-                <YAxis tick={{ fontSize: 11, fill: darkMode ? '#94a3b8' : '#64748b' }} stroke={darkMode ? '#334155' : '#cbd5e1'} domain={['auto', 'auto']} />
-                <Tooltip contentStyle={{ backgroundColor: darkMode ? '#0f172a' : '#ffffff', border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '12px', color: darkMode ? '#f8fafc' : '#0f172a' }} />
-                <Line type="monotone" dataKey="attendance" stroke={darkMode ? '#38bdf8' : '#2563eb'} strokeWidth={3} dot={{ fill: darkMode ? '#38bdf8' : '#2563eb', r: 4 }} activeDot={{ r: 6 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className={`app-shell-card p-4 sm:p-5`}>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="app-section-label">Recent</p>
-              <h2 className="mt-1 text-lg font-semibold">Recent records</h2>
-            </div>
-            <span className="app-pill">Latest activity</span>
-          </div>
-          <div className="space-y-2">
-            {[...sorted].reverse().slice(0, 6).map((entry, idx, arr) => (
-              <div key={entry.id} className={`flex items-center justify-between rounded-2xl px-3 py-3 ${idx !== arr.length - 1 ? (darkMode ? 'border-b border-slate-800/70' : 'border-b border-slate-100') : ''}`}>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}</p>
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    {entry.churchEvent !== 'None' && <span className={`rounded-full px-2.5 py-1 text-[11px] ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{entry.churchEvent}</span>}
-                    {entry.isFastSunday === 1 && <span className={`rounded-full px-2.5 py-1 text-[11px] ${darkMode ? 'bg-cyan-950/70 text-cyan-300' : 'bg-cyan-50 text-cyan-700'}`}>Fast</span>}
+        {loading ? (
+          <DataLoadingState label="Loading attendance data" />
+        ) : error ? (
+          <DataErrorState message={error} />
+        ) : (
+          <>
+            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 p-6 text-white shadow-[0_25px_70px_-30px_rgba(37,99,235,0.65)]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-50/80">Most recent attendance</p>
+                    <p className="mt-3 text-5xl font-semibold sm:text-6xl">{stats?.current ?? 0}</p>
                   </div>
                 </div>
-                <p className="text-lg font-semibold">{entry.attendance}</p>
               </div>
-            ))}
-          </div>
-        </div>
+
+              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                {metricCards.map(card => (
+                  <div key={card.label} className={`app-shell-card rounded-[22px] border p-4 ${darkMode ? 'border-slate-800 bg-slate-900/70' : 'border-slate-200 bg-white/80'}`}>
+                    <div className={`rounded-2xl bg-gradient-to-br ${card.accent} p-3`}>
+                      <p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{card.label}</p>
+                      <p className="mt-2 text-2xl font-semibold">{card.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={`app-shell-card p-4 sm:p-5`}>
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="app-section-label">Trend</p>
+                  <h2 className="mt-1 text-lg font-semibold">Attendance trend</h2>
+                </div>
+                <span className="app-pill">Last {chartData.length} updates</span>
+              </div>
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#e2e8f0'} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: darkMode ? '#94a3b8' : '#64748b' }} stroke={darkMode ? '#334155' : '#cbd5e1'} />
+                    <YAxis tick={{ fontSize: 11, fill: darkMode ? '#94a3b8' : '#64748b' }} stroke={darkMode ? '#334155' : '#cbd5e1'} domain={['auto', 'auto']} />
+                    <Tooltip contentStyle={{ backgroundColor: darkMode ? '#0f172a' : '#ffffff', border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '12px', color: darkMode ? '#f8fafc' : '#0f172a' }} />
+                    <Line type="monotone" dataKey="attendance" stroke={darkMode ? '#38bdf8' : '#2563eb'} strokeWidth={3} dot={{ fill: darkMode ? '#38bdf8' : '#2563eb', r: 4 }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className={`app-shell-card p-4 sm:p-5`}>
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="app-section-label">Recent</p>
+                  <h2 className="mt-1 text-lg font-semibold">Recent records</h2>
+                </div>
+                <span className="app-pill">Latest activity</span>
+              </div>
+              <div className="space-y-2">
+                {[...sorted].reverse().slice(0, 6).map((entry, idx, arr) => (
+                  <div key={entry.id} className={`flex items-center justify-between rounded-2xl px-3 py-3 ${idx !== arr.length - 1 ? (darkMode ? 'border-b border-slate-800/70' : 'border-b border-slate-100') : ''}`}>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}</p>
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {entry.churchEvent !== 'None' && <span className={`rounded-full px-2.5 py-1 text-[11px] ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{entry.churchEvent}</span>}
+                        {entry.isFastSunday === 1 && <span className={`rounded-full px-2.5 py-1 text-[11px] ${darkMode ? 'bg-cyan-950/70 text-cyan-300' : 'bg-cyan-50 text-cyan-700'}`}>Fast</span>}
+                      </div>
+                    </div>
+                    <p className="text-lg font-semibold">{entry.attendance}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

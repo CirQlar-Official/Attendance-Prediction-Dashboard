@@ -40,10 +40,11 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
+import { DataLoadingState, DataErrorState } from '../components/DataState';
 
 export function Forecast() {
   const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
-  const { sorted, predictNextAttendance } = useAttendanceData(selectedGroup?.id ?? null);
+  const { sorted, loading, error, predictNextAttendance } = useAttendanceData(selectedGroup?.id ?? null);
   const { darkMode, setDarkMode } = useDarkMode();
 
   // ── Always calculate from TODAY ──────────────────────────────────────────────
@@ -141,6 +142,11 @@ export function Forecast() {
           </div>
         </div>
 
+        {loading ? (
+          <DataLoadingState label="Loading attendance data" />
+        ) : error ? (
+          <DataErrorState message={error} />
+        ) : (
         <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 p-6 text-white shadow-[0_25px_70px_-30px_rgba(37,99,235,0.65)]">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -160,6 +166,7 @@ export function Forecast() {
             </div>
           </div>
         </div>
+        )}
 
         <div className={`app-shell-card p-4 sm:p-5`}>
           <div className="mb-4">

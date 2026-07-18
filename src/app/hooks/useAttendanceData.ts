@@ -396,10 +396,22 @@ async function loadEntriesFromSupabase(groupId: string | null): Promise<Attendan
   }
 }
 
+/** Like loadEntriesFromSupabase, but reports failure to the caller instead of swallowing it. */
+async function loadEntriesOrThrow(groupId: string): Promise<AttendanceEntry[]> {
+  const { data, error } = await supabase
+    .from('attendance_entries')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('date', { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map(mapRowToEntry);
+}
+
 export function useAttendanceData(groupId: string | null) {
   const [entries, setEntries] = useState<AttendanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  loading;
+  const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
 
   // A stable id per mounted hook instance. Supabase's realtime client
@@ -413,6 +425,9 @@ export function useAttendanceData(groupId: string | null) {
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
+      setError(null);
+
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
 
@@ -422,9 +437,16 @@ export function useAttendanceData(groupId: string | null) {
         return;
       }
 
-      const initialData = await loadEntriesFromSupabase(groupId);
-      setEntries(initialData);
-      setLoading(false);
+      try {
+        const initialData = await loadEntriesOrThrow(groupId);
+        setEntries(initialData);
+      } catch (err: any) {
+        console.error('Error loading attendance entries:', err);
+        setError(err?.message || 'Unable to load attendance data. Please try again.');
+        setEntries([]);
+      } finally {
+        setLoading(false);
+      }
 
       const channel = supabase
         .channel(`attendance_entries:${groupId}:${instanceId}`)
@@ -799,11 +821,14 @@ export function useAttendanceData(groupId: string | null) {
     return { ...result, featureImps };
   };
 
-return { 
-  sorted, 
-  addEntry, 
-  deleteEntry, 
-  updateEntry, 
-  getStats, 
-  predictNextAttendance };
+  return {
+    sorted,
+    loading,
+    error,
+    addEntry,
+    deleteEntry,
+    updateEntry,
+    getStats,
+    predictNextAttendance,
+  };
 }
