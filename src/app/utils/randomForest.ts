@@ -171,6 +171,8 @@ export function trainRandomForest(
   minLeaf = 2,
   seed = 42
 ): Forest {
+  if (X.length === 0) return [];
+
   const rng = makePrng(seed);
   const nFeatures = Math.max(2, Math.round(Math.sqrt(X[0].length)));
   const forest: Forest = [];
