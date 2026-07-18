@@ -243,6 +243,34 @@ export function computeNextWeekFeatures(
   ];
 }
 
+/** Maps a raw `attendance_entries` row (snake_case) to the app's AttendanceEntry shape. */
+function mapRowToEntry(row: any): AttendanceEntry {
+  return {
+    id: row.id,
+    date: row.date,
+    attendance: row.attendance,
+    year: row.year,
+    month: row.month,
+    week: row.week,
+    lag1: row.lag1,
+    lag4: row.lag4,
+    roll4: row.roll4,
+    delta1: row.delta1,
+    delta4: row.delta4,
+    isSummer: row.is_summer,
+    isHolidaySeason: row.is_holiday_season,
+    churchEvent: row.church_event,
+    isFastSunday: row.is_fast_sunday,
+    low_temp: row.low_temp,
+    high_temp: row.high_temp,
+    rainfall: row.rainfall,
+    snowfall: row.snowfall,
+    groupId: row.group_id,
+    createdBy: row.created_by,
+    averagedFrom: row.averaged_from ? JSON.parse(row.averaged_from) : undefined,
+  };
+}
+
 async function loadEntriesFromSupabase(groupId: string | null): Promise<AttendanceEntry[]> {
   if (!groupId) {
     return [];
@@ -257,34 +285,7 @@ async function loadEntriesFromSupabase(groupId: string | null): Promise<Attendan
 
     if (error) throw error;
 
-    if (data && data.length > 0) {
-      return data.map((row: any) => ({
-        id: row.id,
-        date: row.date,
-        attendance: row.attendance,
-        year: row.year,
-        month: row.month,
-        week: row.week,
-        lag1: row.lag1,
-        lag4: row.lag4,
-        roll4: row.roll4,
-        delta1: row.delta1,
-        delta4: row.delta4,
-        isSummer: row.is_summer,
-        isHolidaySeason: row.is_holiday_season,
-        churchEvent: row.church_event,
-        isFastSunday: row.is_fast_sunday,
-        low_temp: row.low_temp,
-        high_temp: row.high_temp,
-        rainfall: row.rainfall,
-        snowfall: row.snowfall,
-        groupId: row.group_id,
-        createdBy: row.created_by,
-        averagedFrom: row.averaged_from ? JSON.parse(row.averaged_from) : undefined,
-      }));
-    }
-
-    return [];
+    return (data ?? []).map(mapRowToEntry);
   } catch (error) {
     console.error('Error loading from Supabase:', error);
     return [];
@@ -326,33 +327,13 @@ export function useAttendanceData(groupId: string | null) {
             if (newEntry.group_id !== groupId) {
               return;
             }
-            setEntries(prev => [
-              ...prev,
-              {
-                id: newEntry.id,
-                date: newEntry.date,
-                attendance: newEntry.attendance,
-                year: newEntry.year,
-                month: newEntry.month,
-                week: newEntry.week,
-                lag1: newEntry.lag1,
-                lag4: newEntry.lag4,
-                roll4: newEntry.roll4,
-                delta1: newEntry.delta1,
-                delta4: newEntry.delta4,
-                isSummer: newEntry.is_summer,
-                isHolidaySeason: newEntry.is_holiday_season,
-                churchEvent: newEntry.church_event,
-                isFastSunday: newEntry.is_fast_sunday,
-                low_temp: newEntry.low_temp,
-                high_temp: newEntry.high_temp,
-                rainfall: newEntry.rainfall,
-                snowfall: newEntry.snowfall,
-                groupId: newEntry.group_id,
-                createdBy: newEntry.created_by,
-                averagedFrom: newEntry.averaged_from ? JSON.parse(newEntry.averaged_from) : undefined,
-              },
-            ]);
+            const mapped = mapRowToEntry(newEntry);
+            setEntries(prev =>
+              // The client that made the write already applied it optimistically
+              // (see addEntry) - without this guard, that same client would also
+              // receive its own INSERT back over realtime and duplicate the row.
+              prev.some(e => e.id === mapped.id) ? prev : [...prev, mapped]
+            );
           }
         )
         .subscribe();
@@ -565,31 +546,7 @@ export function useAttendanceData(groupId: string | null) {
       }
 
       if (insertedEntry) {
-        const savedEntry: AttendanceEntry = {
-          id: insertedEntry.id,
-          date: insertedEntry.date,
-          attendance: insertedEntry.attendance,
-          year: insertedEntry.year,
-          month: insertedEntry.month,
-          week: insertedEntry.week,
-          lag1: insertedEntry.lag1,
-          lag4: insertedEntry.lag4,
-          roll4: insertedEntry.roll4,
-          delta1: insertedEntry.delta1,
-          delta4: insertedEntry.delta4,
-          isSummer: insertedEntry.is_summer,
-          isHolidaySeason: insertedEntry.is_holiday_season,
-          churchEvent: insertedEntry.church_event,
-          isFastSunday: insertedEntry.is_fast_sunday,
-          low_temp: insertedEntry.low_temp,
-          high_temp: insertedEntry.high_temp,
-          rainfall: insertedEntry.rainfall,
-          snowfall: insertedEntry.snowfall,
-          groupId: insertedEntry.group_id,
-          createdBy: insertedEntry.created_by,
-          averagedFrom: insertedEntry.averaged_from ? JSON.parse(insertedEntry.averaged_from) : undefined,
-        };
-
+        const savedEntry = mapRowToEntry(insertedEntry);
         setEntries(prev => [...prev, savedEntry]);
       }
     }
