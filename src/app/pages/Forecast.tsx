@@ -119,9 +119,9 @@ export function Forecast() {
   const recentEntries = [...sorted].reverse().slice(0, 5);
 
   return (
-    <div className={`min-h-full w-full overflow-auto px-3 py-3 pb-24 sm:px-4 sm:py-4 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className="min-h-full w-full overflow-auto px-3 py-3 pb-24 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-4">
       <div className="mx-auto flex max-w-6xl flex-col gap-4">
-        <div className={`app-shell-card-strong overflow-hidden p-4 sm:p-6`}>
+        <div className="app-shell-card-strong overflow-hidden p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-slate-50/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400">
@@ -130,12 +130,12 @@ export function Forecast() {
               </div>
               <div>
                 <p className="text-2xl font-semibold tracking-tight">Attendance forecast</p>
-                <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${darkMode ? 'border-cyan-900/60 bg-cyan-950/50 text-cyan-300' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}>Predicting {format(nextSunday, 'MMM d')}</div>
-              <button onClick={() => setDarkMode(!darkMode)} className={`rounded-2xl p-2.5 transition ${darkMode ? 'bg-slate-800 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+              <div className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/50 dark:text-cyan-300">Predicting {format(nextSunday, 'MMM d')}</div>
+              <button onClick={() => setDarkMode(!darkMode)} className="rounded-2xl bg-slate-100 p-2.5 text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
                 {darkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </button>
             </div>
@@ -171,7 +171,7 @@ export function Forecast() {
         </div>
         )}
 
-        <div className={`app-shell-card p-4 sm:p-5`}>
+        <div className="app-shell-card p-4 sm:p-5">
           <div className="mb-4">
             <p className="app-section-label">Context</p>
             <h2 className="mt-1 text-lg font-semibold">Adjust next-week context</h2>
@@ -179,7 +179,11 @@ export function Forecast() {
 
           <div className="mb-4">
             <label className="mb-2 block text-sm font-semibold">Church event</label>
-            <select value={churchEvent} onChange={e => setChurchEvent(e.target.value as ChurchEvent)} className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-900'}`}>
+            <select
+              value={churchEvent}
+              onChange={e => setChurchEvent(e.target.value as ChurchEvent)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 focus:ring-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
               {CHURCH_EVENTS.map(ev => <option key={ev} value={ev}>{ev}</option>)}
             </select>
           </div>
@@ -190,7 +194,15 @@ export function Forecast() {
               { label: 'Summer', value: isSummer, set: setIsSummer },
               { label: 'Holiday', value: isHolidaySeason, set: setIsHolidaySeason },
             ].map(({ label, value, set }) => (
-              <button key={label} onClick={() => set(value === 1 ? 0 : 1)} className={`flex flex-col items-center justify-center rounded-2xl border px-3 py-3 text-center transition ${value === 1 ? (darkMode ? 'border-cyan-400 bg-cyan-500/15 text-cyan-200' : 'border-blue-200 bg-blue-50 text-blue-700') : (darkMode ? 'border-slate-700 bg-slate-800/70 text-slate-300' : 'border-slate-200 bg-white text-slate-600')}`}>
+              <button
+                key={label}
+                onClick={() => set(value === 1 ? 0 : 1)}
+                className={`flex flex-col items-center justify-center rounded-2xl border px-3 py-3 text-center transition ${
+                  value === 1
+                    ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-cyan-400 dark:bg-cyan-500/15 dark:text-cyan-200'
+                    : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300'
+                }`}
+              >
                 <p className="text-sm font-semibold">{label}</p>
                 {value === 1 ? <Check className="mt-1 size-4" /> : <X className="mt-1 size-4" />}
               </button>
@@ -199,15 +211,17 @@ export function Forecast() {
         </div>
 
         {topImps.length > 0 && (
-          <div className={`app-shell-card p-4 sm:p-5`}>
+          <div className="app-shell-card p-4 sm:p-5">
             <div className="mb-4 flex items-center gap-2">
-              <BarChart2 className={`size-4 ${darkMode ? 'text-cyan-300' : 'text-blue-600'}`} />
+              <BarChart2 className="size-4 text-blue-600 dark:text-cyan-300" />
               <div>
                 <p className="app-section-label">Model</p>
                 <h2 className="mt-1 text-lg font-semibold">Feature importances</h2>
               </div>
             </div>
             <ResponsiveContainer width="100%" height={180}>
+              {/* Recharts renders raw SVG and takes color values via props/style,
+                  not classNames - darkMode stays JS-level logic for this chart. */}
               <BarChart
                 data={topImps}
                 layout="vertical"
@@ -240,11 +254,11 @@ export function Forecast() {
                 <Bar dataKey="importance" fill={darkMode ? '#029eff' : '#000124'} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
-            <p className={`mt-2 text-center text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Weighted split-frequency across {result.treePredictions.length} RF trees</p>
+            <p className="mt-2 text-center text-[11px] text-slate-500 dark:text-slate-400">Weighted split-frequency across {result.treePredictions.length} RF trees</p>
           </div>
         )}
 
-        <div className={`app-shell-card p-4 sm:p-5`}>
+        <div className="app-shell-card p-4 sm:p-5">
           <div className="mb-4">
             <p className="app-section-label">Inputs</p>
             <h2 className="mt-1 text-lg font-semibold">Model inputs for next week</h2>
@@ -263,13 +277,14 @@ export function Forecast() {
             ];
 
             return rows.map(({ label, value, signed }) => (
-              <div key={label} className={`flex items-center justify-between rounded-2xl px-3 py-3 ${darkMode ? 'bg-slate-900/60' : 'bg-slate-50/70'}`}>
-                <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{label}</p>
+              <div key={label} className="flex items-center justify-between rounded-2xl px-3 py-3 bg-slate-50/70 dark:bg-slate-900/60">
+                <p className="text-sm text-slate-600 dark:text-slate-300">{label}</p>
                 <p
-                  className={`font-['Segoe_UI'] text-[13px] ${
-                    darkMode && !signed ? 'text-white' : !darkMode && !signed ? 'text-black' : ''
-                  }`}
+                  className={`font-['Segoe_UI'] text-[13px] ${!signed ? 'text-black dark:text-white' : ''}`}
                   style={
+                    // Numeric-comparison-driven color (positive/negative/neutral),
+                    // and the neutral case still differs by mode - not expressible
+                    // as a static Tailwind class, so this stays inline/JS-level.
                     signed
                       ? { color: value > 0 ? '#14ae5c' : value < 0 ? '#ef4444' : darkMode ? '#999' : '#4c4c4c' }
                       : {}
@@ -290,7 +305,7 @@ export function Forecast() {
           if (!hasWeather) return null;
 
           return (
-            <div className={`app-shell-card p-4 sm:p-5`}>
+            <div className="app-shell-card p-4 sm:p-5">
               <div className="mb-4">
                 <p className="app-section-label">Weather</p>
                 <h2 className="mt-1 text-lg font-semibold">Recent weather</h2>
@@ -300,23 +315,29 @@ export function Forecast() {
                   { label: 'High', value: `${lastEntry.high_temp || '--'}°`, icon: <ThermometerSun color="#ff7a38" /> },
                   { label: 'Low', value: `${lastEntry.low_temp || '--'}°`, icon: <ThermometerSnowflake color="#00C0E8" /> },
                   { label: 'Rainfall', value: `${(lastEntry.rainfall || 0).toFixed(1)}mm`, icon: <Droplets color="#00C0E8" /> },
-                  { label: 'Snowfall', value: `${(lastEntry.snowfall || 0).toFixed(1)}mm`, icon: <Snowflake color={darkMode ? '#cbd5e1' : '#00C0E8'} /> },
+                  {
+                    label: 'Snowfall',
+                    value: `${(lastEntry.snowfall || 0).toFixed(1)}mm`,
+                    // lucide-react's `color` prop takes a raw value, not a
+                    // className - darkMode stays JS-level for this one icon.
+                    icon: <Snowflake color={darkMode ? '#cbd5e1' : '#00C0E8'} />,
+                  },
                 ].map(item => (
-                  <div key={item.label} className={`rounded-2xl border p-3 ${darkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-50/70'}`}>
+                  <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
                       {item.icon}
                       <span>{item.label}</span>
                     </div>
-                    <p className={`mt-2 text-lg font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.value}</p>
+                    <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-white">{item.value}</p>
                   </div>
                 ))}
               </div>
-              <p className={`mt-3 text-center text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Weather data helps predict attendance</p>
+              <p className="mt-3 text-center text-[11px] text-slate-500 dark:text-slate-400">Weather data helps predict attendance</p>
             </div>
           );
         })()}
 
-        <div className={`app-shell-card p-4 sm:p-5`}>
+        <div className="app-shell-card p-4 sm:p-5">
           <div className="mb-4">
             <p className="app-section-label">History</p>
             <h2 className="mt-1 text-lg font-semibold">Recent attendance</h2>
@@ -334,10 +355,13 @@ export function Forecast() {
               ) : null;
 
             return (
-              <div key={entry.id} className={`flex items-center rounded-2xl px-3 py-3 ${index !== recentEntries.length - 1 ? (darkMode ? 'mb-2 bg-slate-900/60' : 'mb-2 bg-slate-50/70') : ''}`}>
+              <div
+                key={entry.id}
+                className={`flex items-center rounded-2xl px-3 py-3 ${index !== recentEntries.length - 1 ? 'mb-2 bg-slate-50/70 dark:bg-slate-900/60' : ''}`}
+              >
                 <div className="flex-1">
                   <p className="text-sm font-medium">{format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}</p>
-                  {entry.churchEvent !== 'None' && <p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{entry.churchEvent}</p>}
+                  {entry.churchEvent !== 'None' && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{entry.churchEvent}</p>}
                 </div>
                 {trendIcon && <span className="mr-2">{trendIcon}</span>}
                 <p className="text-lg font-semibold">{entry.attendance}</p>
@@ -346,10 +370,10 @@ export function Forecast() {
           })}
         </div>
 
-        <div className={`rounded-[24px] border px-4 py-4 text-center ${darkMode ? 'border-slate-800 bg-slate-900/70' : 'border-slate-200 bg-white/70'}`}>
+        <div className="rounded-[24px] border border-slate-200 bg-white/70 px-4 py-4 text-center dark:border-slate-800 dark:bg-slate-900/70">
           <p className="text-lg font-semibold">CAST</p>
-          <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Church Attendance Statistical Tracker</p>
-          <p className={`mt-2 text-[11px] ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Random Forest Regression · 80 Trees · {sorted.length} training samples</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Church Attendance Statistical Tracker</p>
+          <p className="mt-2 text-[11px] text-slate-500">Random Forest Regression · 80 Trees · {sorted.length} training samples</p>
         </div>
       </div>
     </div>
