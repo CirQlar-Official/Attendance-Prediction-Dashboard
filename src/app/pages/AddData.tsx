@@ -101,12 +101,8 @@ export function AddData() {
       onClick={() => onChange(value === 1 ? 0 : 1)}
       className={`flex-1 rounded-2xl border px-3 py-3 text-center transition-all ${
         value === 1
-          ? darkMode
-            ? 'border-cyan-400 bg-cyan-500/15 text-cyan-200'
-            : 'border-blue-200 bg-blue-50 text-blue-700'
-          : darkMode
-          ? 'border-slate-700 bg-slate-800/70 text-slate-300'
-          : 'border-slate-200 bg-white text-slate-600'
+          ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-cyan-400 dark:bg-cyan-500/15 dark:text-cyan-200'
+          : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300'
       }`}
     >
       <p className="text-sm font-semibold">{label}</p>
@@ -115,7 +111,7 @@ export function AddData() {
   );
 
   return (
-    <div className={`min-h-full w-full overflow-auto px-3 py-3 pb-24 sm:px-4 sm:py-4 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className="min-h-full w-full overflow-auto px-3 py-3 pb-24 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-4">
       <div className="mx-auto flex max-w-5xl flex-col gap-4">
         <div className="app-shell-card-strong overflow-hidden p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -126,14 +122,14 @@ export function AddData() {
               </div>
               <div>
                 <p className="text-2xl font-semibold tracking-tight">Add attendance record</p>
-                <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Lag, roll, and delta values are computed automatically from history.
                 </p>
               </div>
             </div>
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`rounded-2xl p-2.5 transition ${darkMode ? 'bg-slate-800 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+              className="rounded-2xl bg-slate-100 p-2.5 text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
             >
               {darkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </button>
@@ -152,17 +148,17 @@ export function AddData() {
                   Date <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <CalendarDays className={`pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                   <Input
                     type="date"
                     value={date}
                     onChange={e => handleDateChange(e.target.value)}
-                    className={`px-10 ${darkMode ? 'text-white' : 'text-slate-900'}`}
+                    className="px-10 text-slate-900 dark:text-white"
                     wrapperClassName="w-full p-0"
                   />
                 </div>
                 {dateInfo && (
-                  <p className={`mt-2 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     Year {dateInfo.year} · Month {dateInfo.month} · Week {dateInfo.week}
                   </p>
                 )}
@@ -178,7 +174,7 @@ export function AddData() {
                   onChange={e => setAttendanceStr(e.target.value)}
                   placeholder="e.g. 165"
                   min="0"
-                  className={darkMode ? 'text-white placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'}
+                  className="text-slate-900 placeholder:text-slate-400 dark:text-white dark:placeholder:text-slate-500"
                   wrapperClassName="w-full p-0"
                 />
               </div>
@@ -188,7 +184,7 @@ export function AddData() {
                 <select
                   value={churchEvent}
                   onChange={e => setChurchEvent(e.target.value as ChurchEvent)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-900'}`}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 focus:ring-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 >
                   {CHURCH_EVENTS.map(ev => (
                     <option key={ev} value={ev}>
@@ -209,9 +205,9 @@ export function AddData() {
                 </div>
               </div>
 
-              <div className={`rounded-[24px] border p-4 ${darkMode ? 'border-slate-800 bg-slate-900/70' : 'border-slate-200 bg-slate-50/80'}`}>
+              <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/70">
                 <div className="mb-3 flex items-center gap-2">
-                  <Info className={`size-4 ${darkMode ? 'text-cyan-300' : 'text-blue-600'}`} />
+                  <Info className="size-4 text-blue-600 dark:text-cyan-300" />
                   <p className="text-sm font-semibold">Auto-computed model features</p>
                 </div>
 
@@ -239,11 +235,15 @@ export function AddData() {
                         desc: loading ? 'loading history' : 'in model',
                       },
                     ].map(({ label, value, desc, signed }) => (
-                      <div key={label} className={`rounded-2xl border p-3 ${darkMode ? 'border-slate-800 bg-slate-800/70' : 'border-slate-200 bg-white'}`}>
-                        <p className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{label}</p>
+                      <div key={label} className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-800/70">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{label}</p>
                         <p
-                          className={`mt-1 text-lg font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}
+                          className="mt-1 text-lg font-semibold text-slate-900 dark:text-white"
                           style={
+                            // Raw inline style, not a Tailwind class - Tailwind can't
+                            // express "positive/negative/neutral" from a numeric
+                            // comparison, and the neutral color still needs a
+                            // light/dark distinction, so darkMode stays JS-level here.
                             signed
                               ? {
                                   color:
@@ -255,30 +255,30 @@ export function AddData() {
                           {signed && value > 0 ? '+' : ''}
                           {label === 'Training rows' && loading ? '…' : value}
                         </p>
-                        <p className={`mt-0.5 text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{desc}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{desc}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className={`text-[13px] italic ${darkMode ? 'text-gray-400' : 'text-[#9ca3af]'}`}>
+                  <p className="text-[13px] italic text-[#9ca3af] dark:text-gray-400">
                     Enter attendance count above to preview computed features.
                   </p>
                 )}
               </div>
 
               {sorted.length > 0 && (
-                <div className={`rounded-[24px] border p-4 ${darkMode ? 'border-slate-800 bg-slate-900/70' : 'border-slate-200 bg-white/70'}`}>
-                  <p className={`mb-3 text-sm font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Last 4 records</p>
+                <div className="rounded-[24px] border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                  <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Last 4 records</p>
                   {[...sorted].reverse().slice(0, 4).map((e, idx) => (
                     <div
                       key={e.id}
-                      className={`flex justify-between py-[6px] ${idx < 3 ? `border-b ${darkMode ? 'border-gray-700' : 'border-[#eceef2]'}` : ''}`}
+                      className={`flex justify-between py-[6px] ${idx < 3 ? 'border-b border-[#eceef2] dark:border-gray-700' : ''}`}
                     >
-                      <p className={`text-[12px] ${darkMode ? 'text-gray-300' : 'text-[#4c4c4c]'}`}>
+                      <p className="text-[12px] text-[#4c4c4c] dark:text-gray-300">
                         {e.date}
                         {e.churchEvent !== 'None' && <span className="ml-2 text-[10px] text-[#029eff]">{e.churchEvent}</span>}
                       </p>
-                      <p className={`text-[12px] ${darkMode ? 'text-white' : 'text-black'}`}>{e.attendance}</p>
+                      <p className="text-[12px] text-black dark:text-white">{e.attendance}</p>
                     </div>
                   ))}
                 </div>
@@ -293,7 +293,7 @@ export function AddData() {
                 </button>
                 <button
                   onClick={handleCancel}
-                  className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${darkMode ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
+                  className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>

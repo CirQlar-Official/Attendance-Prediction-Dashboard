@@ -36,24 +36,24 @@ export function Dashboard() {
   ];
 
   return (
-    <div className={`min-h-full w-full overflow-auto px-3 py-3 pb-24 sm:px-4 sm:py-4 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className="min-h-full w-full overflow-auto px-3 py-3 pb-24 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-4">
       <div className="mx-auto flex max-w-6xl flex-col gap-4">
-        <div className={`app-shell-card-strong overflow-hidden p-4 sm:p-6`}>
+        <div className="app-shell-card-strong overflow-hidden p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-3">
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{selectedGroup?.name ?? 'Attendance Group'}</h1>
-                <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{formattedDate}</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{formattedDate}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               {isAdmin && selectedGroup?.joinCode && (
-                <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${darkMode ? 'border-cyan-900/60 bg-cyan-950/50 text-cyan-300' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}>
+                <div className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/50 dark:text-cyan-300">
                   Join code: {selectedGroup.joinCode}
                 </div>
               )}
-              <button onClick={() => setDarkMode(!darkMode)} className={`rounded-2xl p-2.5 transition ${darkMode ? 'bg-slate-800 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+              <button onClick={() => setDarkMode(!darkMode)} className="rounded-2xl bg-slate-100 p-2.5 text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
                 {darkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </button>
             </div>
@@ -78,9 +78,9 @@ export function Dashboard() {
 
               <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
                 {metricCards.map(card => (
-                  <div key={card.label} className={`app-shell-card rounded-[22px] border p-4 ${darkMode ? 'border-slate-800 bg-slate-900/70' : 'border-slate-200 bg-white/80'}`}>
+                  <div key={card.label} className="app-shell-card rounded-[22px] border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/70">
                     <div className={`rounded-2xl bg-gradient-to-br ${card.accent} p-3`}>
-                      <p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{card.label}</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{card.label}</p>
                       <p className="mt-2 text-2xl font-semibold">{card.value}</p>
                     </div>
                   </div>
@@ -88,7 +88,7 @@ export function Dashboard() {
               </div>
             </div>
 
-            <div className={`app-shell-card p-4 sm:p-5`}>
+            <div className="app-shell-card p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <p className="app-section-label">Trend</p>
@@ -99,6 +99,9 @@ export function Dashboard() {
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
+                    {/* Recharts renders raw SVG and takes color values via props, not
+                        classNames - it can't consume Tailwind's dark: variant, so
+                        darkMode stays as JS-level logic here rather than a class. */}
                     <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#e2e8f0'} />
                     <XAxis dataKey="date" tick={{ fontSize: 11, fill: darkMode ? '#94a3b8' : '#64748b' }} stroke={darkMode ? '#334155' : '#cbd5e1'} />
                     <YAxis tick={{ fontSize: 11, fill: darkMode ? '#94a3b8' : '#64748b' }} stroke={darkMode ? '#334155' : '#cbd5e1'} domain={['auto', 'auto']} />
@@ -109,7 +112,7 @@ export function Dashboard() {
               </div>
             </div>
 
-            <div className={`app-shell-card p-4 sm:p-5`}>
+            <div className="app-shell-card p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <p className="app-section-label">Recent</p>
@@ -119,12 +122,15 @@ export function Dashboard() {
               </div>
               <div className="space-y-2">
                 {[...sorted].reverse().slice(0, 6).map((entry, idx, arr) => (
-                  <div key={entry.id} className={`flex items-center justify-between rounded-2xl px-3 py-3 ${idx !== arr.length - 1 ? (darkMode ? 'border-b border-slate-800/70' : 'border-b border-slate-100') : ''}`}>
+                  <div
+                    key={entry.id}
+                    className={`flex items-center justify-between rounded-2xl px-3 py-3 ${idx !== arr.length - 1 ? 'border-b border-slate-100 dark:border-slate-800/70' : ''}`}
+                  >
                     <div className="min-w-0">
                       <p className="text-sm font-medium">{format(new Date(entry.date + 'T12:00:00'), 'MMM d, yyyy')}</p>
                       <div className="mt-1 flex flex-wrap gap-2">
-                        {entry.churchEvent !== 'None' && <span className={`rounded-full px-2.5 py-1 text-[11px] ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{entry.churchEvent}</span>}
-                        {entry.isFastSunday === 1 && <span className={`rounded-full px-2.5 py-1 text-[11px] ${darkMode ? 'bg-cyan-950/70 text-cyan-300' : 'bg-cyan-50 text-cyan-700'}`}>Fast</span>}
+                        {entry.churchEvent !== 'None' && <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">{entry.churchEvent}</span>}
+                        {entry.isFastSunday === 1 && <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-[11px] text-cyan-700 dark:bg-cyan-950/70 dark:text-cyan-300">Fast</span>}
                       </div>
                     </div>
                     <p className="text-lg font-semibold">{entry.attendance}</p>
