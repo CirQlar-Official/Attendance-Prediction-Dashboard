@@ -32,6 +32,26 @@ export async function signOut() {
   return supabase.auth.signOut();
 }
 
+/**
+ * Resolves the display name attendance entries are stamped with
+ * (profile full name, falling back to email). Attendance rows store
+ * this same value in `created_by`, so any lookup/delete against that
+ * column must resolve identity the same way or it will silently match
+ * nothing.
+ */
+export async function getCurrentUserFullName(): Promise<string> {
+  const user = await getCurrentUser();
+  if (!user) return 'Unknown';
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('full_name')
+    .eq('user_id', user.id)
+    .single();
+
+  return profile?.full_name ?? user.email ?? 'Unknown';
+}
+
 export async function deleteCurrentAccount(confirmationWord: string) {
   if (confirmationWord.trim().toUpperCase() !== 'DELETE') {
     throw new Error('Please type DELETE to confirm account deletion.');
@@ -43,7 +63,10 @@ export async function deleteCurrentAccount(confirmationWord: string) {
   }
 
   const userId = user.id;
-  const email = user.email ?? null;
+  // attendance_entries.created_by stores the display name resolved by
+  // getCurrentUserFullName (email is only a fallback for users with no
+  // profile name), so that's what deletion must match against.
+  const createdByValue = await getCurrentUserFullName();
 
   const cleanupTasks = [
     supabase.from('group_members').delete().eq('user_id', userId),
@@ -51,8 +74,8 @@ export async function deleteCurrentAccount(confirmationWord: string) {
     supabase.from('admins').delete().eq('user_id', userId),
   ];
 
-  if (email) {
-    cleanupTasks.push(supabase.from('attendance_entries').delete().eq('created_by', email));
+  if (createdByValue && createdByValue !== 'Unknown') {
+    cleanupTasks.push(supabase.from('attendance_entries').delete().eq('created_by', createdByValue));
   }
 
   const results = await Promise.all(cleanupTasks);

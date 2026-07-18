@@ -6,7 +6,7 @@ import {
   type Forest,
   type RFResult,
 } from '../utils/randomForest';
-import { supabase } from '../../lib/supabase';
+import { supabase, getCurrentUserFullName } from '../../lib/supabase';
 import { fetchWeatherForDate } from '../../lib/weather';
 
 export type ChurchEvent =
@@ -80,19 +80,6 @@ export const FEATURE_NAMES = [
   'Rainfall',
   'Snowfall',
 ];
-
-async function getCurrentUserFullName(): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return 'Unknown';
-
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('full_name')
-    .eq('user_id', user.id)
-    .single();
-
-  return profile?.full_name ?? user.email ?? 'Unknown';
-}
 
 function encodeChurchEvent(ev: ChurchEvent): number {
   const map: Record<ChurchEvent, number> = {
@@ -543,8 +530,8 @@ export function useAttendanceData(groupId: string | null) {
       isHolidaySeason: raw.isHolidaySeason,
       churchEvent: raw.churchEvent,
       isFastSunday: raw.isFastSunday,
-      low_temp: weather?.low_temp || 65,
-      high_temp: weather?.high_temp || 55,
+      high_temp: weather?.high_temp || 65,
+      low_temp: weather?.low_temp || 55,
       rainfall: weather?.rainfall || 0,
       snowfall: weather?.snowfall || 0,
       groupId,

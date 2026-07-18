@@ -1,6 +1,6 @@
 /**
  * Weather data fetching utility
- * Uses Open-Meteo API to get weather data for the current day
+ * Uses Open-Meteo to get weather data for a specific date (past or future).
  */
 
 const DEFAULT_LAT = 39.852285881165265;
@@ -13,14 +13,34 @@ export interface WeatherData {
   snowfall: number;
 }
 
+const DAILY_VARS = 'temperature_2m_max,temperature_2m_min,rain_sum,snowfall_sum';
+
+function toYmd(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /* Fetch weather data for a specific date */
 export async function fetchWeatherForDate(d: Date): Promise<WeatherData | null> {
   try {
+    const ymd = toYmd(d);
+    const today = toYmd(new Date());
+
+    // Open-Meteo splits historical data (archive-api) from forecast data
+    // (api); the forecast endpoint has no record of past days.
+    const base =
+      ymd <= today
+        ? 'https://archive-api.open-meteo.com/v1/archive'
+        : 'https://api.open-meteo.com/v1/forecast';
+
     const url =
-      `https://api.open-meteo.com/v1/forecast` +
-      `?latitude=${DEFAULT_LAT}` +
+      `${base}?latitude=${DEFAULT_LAT}` +
       `&longitude=${DEFAULT_LON}` +
-      `&daily=temperature_2m_max,temperature_2m_min,rain_sum,snowfall_sum` +
+      `&start_date=${ymd}` +
+      `&end_date=${ymd}` +
+      `&daily=${DAILY_VARS}` +
       `&timezone=America/New_York` +
       `&temperature_unit=fahrenheit`;
 
