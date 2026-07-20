@@ -9,6 +9,7 @@ import { RandomForestClient } from '../workers/randomForestClient';
 import { supabase, getCurrentUserFullName } from '../../lib/supabase';
 import { fetchWeatherForDate } from '../../lib/weather';
 import { WEATHER_DEFAULTS } from '../../config';
+import { toast } from 'sonner';
 
 export type ChurchEvent =
   | 'None'
@@ -551,7 +552,17 @@ export function useAttendanceData(groupId: string | null) {
   }, [sorted]);
 
   const deleteEntry = async (id: string) => {
+    // Snapshot so we can roll the optimistic removal back if the server
+    // rejects (or silently no-ops) the delete.
+    const previousEntries = entries;
     setEntries(prev => prev.filter(e => e.id !== id));
+
+    // `.select()` makes Supabase return the rows it actually deleted.
+    // Without it, a delete that Row-Level Security blocks comes back with
+    // error === null and simply removes 0 rows - so the UI would think it
+    // succeeded while the row is still in the database and reappears on
+    // the next load/realtime sync. That "delete does nothing" is exactly
+    // what this guards against.
     const query = supabase
       .from('attendance_entries')
       .delete()
@@ -561,11 +572,21 @@ export function useAttendanceData(groupId: string | null) {
       query.eq('group_id', groupId);
     }
 
-    const { error } = await query;
+    const { data: deletedRows, error } = await query.select('id');
+
     if (error) {
       console.error('Error deleting entry:', error);
-      const restored = await loadEntriesFromSupabase(groupId);
-      setEntries(restored);
+      setEntries(previousEntries);
+      toast.error('Could not delete this record. Please try again.');
+      return;
+    }
+
+    if (!deletedRows || deletedRows.length === 0) {
+      // No error, but nothing was deleted - almost always a permissions
+      // (RLS) issue: the current user isn't allowed to delete this row.
+      console.warn('Delete affected 0 rows (likely blocked by RLS):', id);
+      setEntries(previousEntries);
+      toast.error("You don't have permission to delete this record.");
     }
   };
 

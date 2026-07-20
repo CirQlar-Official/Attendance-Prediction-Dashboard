@@ -3,6 +3,7 @@ import { Home, Plus, TrendingUp, Menu, X, Clock, Users, LogOut } from 'lucide-re
 import { useRef, useEffect, useState } from 'react';
 import { leaveGroup } from '../../lib/supabase';
 import { toast } from 'sonner';
+import logo from '../context/Logo.png';
 
 interface BottomNavProps {
   isAdmin: boolean;
@@ -104,7 +105,7 @@ export function BottomNav({ isAdmin, onLeaveGroup }: BottomNavProps) {
               <div className="flex items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 text-white shadow-lg shadow-cyan-500/20">
 
-                 <img src='src/app/context/Logo.png' className="h-auto w-3/4" />
+                 <img src={logo} className="h-auto w-3/4" alt="CAST logo" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">CAST</p>

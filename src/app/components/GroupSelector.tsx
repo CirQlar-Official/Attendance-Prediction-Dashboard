@@ -9,6 +9,7 @@ import { cn } from '../../lib/utils';
 import { getGroupByJoinCode, createGroup, joinGroup, deleteCurrentAccount } from '../../lib/supabase';
 import type { Group } from '../hooks/useAttendanceData';
 import { SmoothInput } from './ui/input';
+import logo from '../context/Logo.png';
 
 // ==========================================
 // Types & Shared Config for Smooth Inputs
@@ -136,7 +137,7 @@ export function GroupSelector({ user, isAdmin, onGroupSelected, onAuthChange }: 
               <p className="mt-3 max-w-lg text-sm leading-6 text-blue-50">Join an existing group with a code or create a new one.</p>
               <div className="mt-8 flex items-center gap-3 rounded-2xl border border-white/20 bg-white/15 p-4 backdrop-blur">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20">
-                  <img src='src/app/context/Logo.png' className="h-auto w-3/4" alt="Logo" />
+                  <img src={logo} className="h-auto w-3/4" alt="Logo" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold">Connected groups</p>
