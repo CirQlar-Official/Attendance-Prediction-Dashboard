@@ -862,6 +862,13 @@ export function useAttendanceData(groupId: string | null) {
     loading,
     error,
     modelTraining,
+    // Number of trained trees. Flips from 0 to the full forest size once
+    // async training completes. Consumers that memoize a prediction must
+    // include this in their dependency array - otherwise the memo runs
+    // once while the forest is still empty (prediction 0) and never
+    // recomputes when training finishes, since predictNextAttendance
+    // closes over `forest` rather than taking it as an argument.
+    forestSize: forest.length,
     addEntry,
     deleteEntry,
     updateEntry,

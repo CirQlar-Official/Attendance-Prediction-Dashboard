@@ -44,7 +44,7 @@ import { DataLoadingState, DataErrorState } from '../components/DataState';
 
 export function Forecast() {
   const { selectedGroup } = useOutletContext<{ selectedGroup: Group | null }>();
-  const { sorted, loading, error, modelTraining, predictNextAttendance } = useAttendanceData(selectedGroup?.id ?? null);
+  const { sorted, loading, error, modelTraining, forestSize, predictNextAttendance } = useAttendanceData(selectedGroup?.id ?? null);
   const { darkMode, setDarkMode } = useDarkMode();
 
   // ── Always calculate from TODAY ──────────────────────────────────────────────
@@ -85,8 +85,12 @@ export function Forecast() {
         month: nextMonth,
         week: nextWeek,
       }),
+    // forestSize flips from 0 to the full tree count when async training
+    // finishes; without it the memo would compute once against an empty
+    // forest (prediction 0) and never recompute, leaving the page stuck
+    // at 0 on load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isSummer, isHolidaySeason, churchEvent, isFastSunday, sorted.length]
+    [isSummer, isHolidaySeason, churchEvent, isFastSunday, sorted.length, forestSize]
   );
 
   const { prediction, std, confidence, featureImps } = result;
