@@ -5,6 +5,7 @@ import { BottomNav } from './BottomNav';
 import { Auth } from './Auth';
 import { GroupSelector } from './GroupSelector';
 import { Toaster } from './ui/sonner';
+import { toast } from 'sonner';
 import type { Group } from '../hooks/useAttendanceData';
 
 export function RootLayout() {
@@ -21,7 +22,9 @@ export function RootLayout() {
 
         const fullName = currentUser?.user_metadata?.full_name;
         if (currentUser?.id && fullName) {
-          saveUserProfile(fullName, currentUser.id);
+          saveUserProfile(fullName, currentUser.id).catch((profileErr: any) => {
+            toast.error(`Couldn't save your display name: ${profileErr.message}`);
+          });
         }
       } catch (error) {
         console.error('Error checking user:', error);

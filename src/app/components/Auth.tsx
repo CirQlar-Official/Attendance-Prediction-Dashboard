@@ -32,7 +32,11 @@ export function Auth({ user, onAuthChange }: AuthProps) {
         if (err) throw err;
         const candidateUser = data.user ?? data.session?.user;
         if (candidateUser?.id && fullName.trim()) {
-          await saveUserProfile(fullName, candidateUser.id);
+          try {
+            await saveUserProfile(fullName, candidateUser.id);
+          } catch (profileErr: any) {
+            toast.error(`Signup worked, but saving your name failed: ${profileErr.message}`);
+          }
         }
         toast.success('Check your email to confirm signup!');
       } else {

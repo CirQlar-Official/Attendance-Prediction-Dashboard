@@ -101,17 +101,16 @@ export async function saveUserProfile(fullName: string, userId?: string) {
 
   if (!resolvedUserId) return null;
 
-  try {
-    const { error } = await supabase
-      .from('user_profiles')
-      .upsert(
-        { user_id: resolvedUserId, full_name: trimmedName },
-        { onConflict: 'user_id' }
-      );
+  const { error } = await supabase
+    .from('user_profiles')
+    .upsert(
+      { user_id: resolvedUserId, full_name: trimmedName },
+      { onConflict: 'user_id' }
+    );
 
-    if (error) throw error;
-  } catch (error) {
+  if (error) {
     console.error('Error saving user profile row:', error);
+    throw error;
   }
 
   try {
