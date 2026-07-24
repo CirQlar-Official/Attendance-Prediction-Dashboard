@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router';
 import { useState, useEffect } from 'react';
-import { getCurrentUser, checkIsAdmin, getUserGroup } from '../../lib/supabase';
+import { getCurrentUser, checkIsAdmin, getUserGroup, saveUserProfile } from '../../lib/supabase';
 import { BottomNav } from './BottomNav';
 import { Auth } from './Auth';
 import { GroupSelector } from './GroupSelector';
@@ -18,6 +18,11 @@ export function RootLayout() {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
+
+        const fullName = currentUser?.user_metadata?.full_name;
+        if (currentUser?.id && fullName) {
+          saveUserProfile(fullName, currentUser.id);
+        }
       } catch (error) {
         console.error('Error checking user:', error);
       } finally {
