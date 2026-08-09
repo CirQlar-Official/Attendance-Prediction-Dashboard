@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signUp, signIn, signOut, getCurrentUser, saveUserProfile } from '../../lib/supabase';
+import { signUp, signIn, signOut, getCurrentUser } from '../../lib/supabase';
 import { Button } from './ui/button';
 import { SmoothInput } from './ui/input';
 import { Card } from './ui/card';

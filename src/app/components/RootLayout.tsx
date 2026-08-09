@@ -1,11 +1,11 @@
 import { Outlet } from 'react-router';
 import { useState, useEffect } from 'react';
-import { getCurrentUser, checkIsAdmin, getUserGroup, saveUserProfile } from '../../lib/supabase';
+import { getCurrentUser, checkIsAdmin, getUserGroup } from '../../lib/supabase';
 import { BottomNav } from './BottomNav';
 import { Auth } from './Auth';
 import { GroupSelector } from './GroupSelector';
 import { Toaster } from './ui/sonner';
-import { toast } from 'sonner';
+
 import type { Group } from '../hooks/useAttendanceData';
 
 export function RootLayout() {
@@ -19,13 +19,6 @@ export function RootLayout() {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
-
-        const fullName = currentUser?.user_metadata?.full_name;
-        if (currentUser?.id && fullName) {
-          saveUserProfile(fullName, currentUser.id).catch((profileErr: any) => {
-            toast.error(`Couldn't save your display name: ${profileErr.message}`);
-          });
-        }
       } catch (error) {
         console.error('Error checking user:', error);
       } finally {
