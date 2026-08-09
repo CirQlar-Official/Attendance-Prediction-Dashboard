@@ -28,23 +28,9 @@ export function Auth({ user, onAuthChange }: AuthProps) {
 
     try {
       if (isSignUp) {
-        const { data, error: err } = await signUp(email, password, fullName);
+        const { error: err } = await signUp(email, password, fullName);
         if (err) throw err;
-        const candidateUser = data?.user ?? data?.session?.user;
-        if (candidateUser?.id && fullName.trim()) {
-          try {
-            await saveUserProfile(fullName, candidateUser.id);
-          } catch (profileErr: any) {
-            console.warn('Manual profile insert skipped or failed:', profileErr);
-          }
-        }
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          onAuthChange(currentUser);
-          toast.success('Account created successfully!');
-        } else {
-          toast.success('Check your email to confirm signup!');
-        }
+        toast.success('Check your email to confirm signup!');
       } else {
         const { error: err } = await signIn(email, password);
         if (err) throw err;

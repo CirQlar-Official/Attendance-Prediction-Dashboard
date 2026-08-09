@@ -1,151 +1,55 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const isSupabaseConfigured = Boolean(
-  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase credentials. Check .env.local file.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const DEFAULT_DEMO_USER = {
-  id: 'demo-admin-1',
-  email: 'admin@cast.org',
-  user_metadata: { full_name: 'Demo Admin' },
-};
-
-const DEFAULT_DEMO_GROUP = {
-  id: 'demo-group-1',
-  name: 'Main Congregation',
-  joinCode: 'CAST26',
-  createdBy: 'demo-admin-1',
-  createdAt: new Date().toISOString(),
-};
-
-function getLocalDemoUser() {
-  try {
-    const stored = localStorage.getItem('cast_demo_user');
-    if (stored) return JSON.parse(stored);
-  } catch (e) {
-    // ignore
-  }
-  return DEFAULT_DEMO_USER;
-}
-
-function setLocalDemoUser(user: any) {
-  try {
-    if (user) {
-      localStorage.setItem('cast_demo_user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('cast_demo_user');
-    }
-  } catch (e) {
-    // ignore
-  }
-}
-
 export async function getSession() {
-  if (!isSupabaseConfigured) {
-    return { user: getLocalDemoUser() } as any;
-  }
-  try {
-    const { data } = await supabase.auth.getSession();
-    return data.session;
-  } catch (e) {
-    return { user: getLocalDemoUser() } as any;
-  }
+  const { data } = await supabase.auth.getSession();
+  return data.session;
 }
 
 export async function signUp(email: string, password: string, fullName?: string) {
-  if (!isSupabaseConfigured) {
-    const newUser = {
-      id: `user-${Date.now()}`,
-      email,
-      user_metadata: { full_name: fullName?.trim() || 'Demo User' },
-    };
-    setLocalDemoUser(newUser);
-    return { data: { user: newUser, session: { user: newUser } }, error: null } as any;
-  }
-  try {
-    return await supabase.auth.signUp({
-      email,
-      password,
-      options: fullName?.trim()
-        ? { data: { full_name: fullName.trim() } }
-        : undefined,
-    });
-  } catch (err) {
-    const newUser = {
-      id: `user-${Date.now()}`,
-      email,
-      user_metadata: { full_name: fullName?.trim() || 'Demo User' },
-    };
-    setLocalDemoUser(newUser);
-    return { data: { user: newUser, session: { user: newUser } }, error: null } as any;
-  }
+  return supabase.auth.signUp({
+    email,
+    password,
+    options: fullName?.trim()
+      ? { data: { full_name: fullName.trim() } }
+      : undefined,
+  });
 }
 
 export async function signIn(email: string, password: string) {
-  if (!isSupabaseConfigured) {
-    const user = {
-      id: `user-${Date.now()}`,
-      email,
-      user_metadata: { full_name: email.split('@')[0] || 'Demo User' },
-    };
-    setLocalDemoUser(user);
-    return { data: { user, session: { user } }, error: null } as any;
-  }
-  try {
-    return await supabase.auth.signInWithPassword({ email, password });
-  } catch (err) {
-    const user = {
-      id: `user-${Date.now()}`,
-      email,
-      user_metadata: { full_name: email.split('@')[0] || 'Demo User' },
-    };
-    setLocalDemoUser(user);
-    return { data: { user, session: { user } }, error: null } as any;
-  }
+  return supabase.auth.signInWithPassword({ email, password });
 }
 
 export async function signOut() {
-  setLocalDemoUser(null);
-  if (isSupabaseConfigured) {
-    try {
-      return await supabase.auth.signOut();
-    } catch (e) {
-      // ignore
-    }
-  }
-  return { error: null };
+  return supabase.auth.signOut();
 }
 
 /**
  * Resolves the display name attendance entries are stamped with
+ * (profile full name, falling back to email). Attendance rows store
+ * this same value in `created_by`, so any lookup/delete against that
+ * column must resolve identity the same way or it will silently match
+ * nothing.
  */
 export async function getCurrentUserFullName(): Promise<string> {
   const user = await getCurrentUser();
   if (!user) return 'Unknown';
 
-  if (user.user_metadata?.full_name) {
-    return user.user_metadata.full_name;
-  }
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('full_name')
+    .eq('user_id', user.id)
+    .single();
 
-  if (isSupabaseConfigured) {
-    try {
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('full_name')
-        .eq('user_id', user.id)
-        .single();
-      if (profile?.full_name) return profile.full_name;
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  return user.email ?? 'Unknown';
+  return profile?.full_name ?? user.email ?? 'Unknown';
 }
 
 export async function deleteCurrentAccount(confirmationWord: string) {
@@ -158,7 +62,33 @@ export async function deleteCurrentAccount(confirmationWord: string) {
     throw new Error('You must be signed in to delete your account.');
   }
 
-  setLocalDemoUser(null);
+  const userId = user.id;
+  // attendance_entries.created_by stores the display name resolved by
+  // getCurrentUserFullName (email is only a fallback for users with no
+  // profile name), so that's what deletion must match against.
+  const createdByValue = await getCurrentUserFullName();
+
+  const cleanupTasks = [
+    supabase.from('group_members').delete().eq('user_id', userId),
+    supabase.from('user_profiles').delete().eq('user_id', userId),
+    supabase.from('admins').delete().eq('user_id', userId),
+  ];
+
+  if (createdByValue && createdByValue !== 'Unknown') {
+    cleanupTasks.push(supabase.from('attendance_entries').delete().eq('created_by', createdByValue));
+  }
+
+  const results = await Promise.all(cleanupTasks);
+  const firstError = results.find(result => result.error)?.error;
+  if (firstError) {
+    throw firstError;
+  }
+
+  const { error: signOutError } = await supabase.auth.signOut();
+  if (signOutError) {
+    throw signOutError;
+  }
+
   return true;
 }
 
@@ -171,23 +101,22 @@ export async function saveUserProfile(fullName: string, userId?: string) {
 
   if (!resolvedUserId) return null;
 
-  if (currentUser) {
-    currentUser.user_metadata = { ...currentUser.user_metadata, full_name: trimmedName };
-    setLocalDemoUser(currentUser);
+  const { error } = await supabase
+    .from('user_profiles')
+    .upsert(
+      { user_id: resolvedUserId, full_name: trimmedName },
+      { onConflict: 'user_id' }
+    );
+
+  if (error) {
+    console.error('Error saving user profile row:', error);
+    throw error;
   }
 
-  if (isSupabaseConfigured) {
-    try {
-      await supabase
-        .from('user_profiles')
-        .upsert(
-          { user_id: resolvedUserId, full_name: trimmedName },
-          { onConflict: 'user_id' }
-        );
-      await supabase.auth.updateUser({ data: { full_name: trimmedName } });
-    } catch (error) {
-      console.warn('Error saving profile in Supabase:', error);
-    }
+  try {
+    await supabase.auth.updateUser({ data: { full_name: trimmedName } });
+  } catch (error) {
+    console.error('Error updating auth metadata:', error);
   }
 
   return true;
@@ -196,46 +125,32 @@ export async function saveUserProfile(fullName: string, userId?: string) {
 export async function getProfilesForUserIds(userIds: string[]) {
   if (!userIds.length) return [];
 
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('user_id, full_name')
-        .in('user_id', userIds);
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('user_id, full_name')
+      .in('user_id', userIds);
 
-      if (!error && data) return data;
-    } catch (error) {
-      console.warn('Error loading profile rows from Supabase:', error);
-    }
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error loading user profile rows:', error);
+    return [];
   }
-
-  return userIds.map(id => ({ user_id: id, full_name: 'Demo Member' }));
 }
 
 export async function getCurrentUser() {
-  if (!isSupabaseConfigured) {
-    return getLocalDemoUser();
-  }
-  try {
-    const { data } = await supabase.auth.getUser();
-    return data?.user || getLocalDemoUser();
-  } catch (e) {
-    return getLocalDemoUser();
-  }
+  const { data } = await supabase.auth.getUser();
+  return data.user;
 }
 
 export async function checkIsAdmin(userId: string) {
-  if (!isSupabaseConfigured) return true;
-  try {
-    const { data } = await supabase
-      .from('admins')
-      .select('user_id')
-      .eq('user_id', userId)
-      .single();
-    return !!data || true;
-  } catch (e) {
-    return true;
-  }
+  const { data } = await supabase
+    .from('admins')
+    .select('user_id')
+    .eq('user_id', userId)
+    .single();
+  return !!data;
 }
 
 function normalizeGroup(group: any) {
@@ -299,9 +214,6 @@ export async function getGroupMembers(groupId: string) {
 }
 
 export async function getUserGroup(userId: string) {
-  if (!isSupabaseConfigured) {
-    return DEFAULT_DEMO_GROUP;
-  }
   try {
     const { data, error } = await supabase
       .from('group_members')
@@ -309,7 +221,8 @@ export async function getUserGroup(userId: string) {
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (error || !data) return DEFAULT_DEMO_GROUP;
+    if (error) throw error;
+    if (!data) return null;
 
     const { data: groupData, error: groupError } = await supabase
       .from('groups')
@@ -317,11 +230,11 @@ export async function getUserGroup(userId: string) {
       .eq('id', data.group_id)
       .single();
 
-    if (groupError || !groupData) return DEFAULT_DEMO_GROUP;
+    if (groupError) throw groupError;
     return normalizeGroup(groupData);
   } catch (error) {
-    console.warn('Error getting user group, using default demo group:', error);
-    return DEFAULT_DEMO_GROUP;
+    console.error('Error getting user group:', error);
+    return null;
   }
 }
 

@@ -386,51 +386,6 @@ function mapRowToEntry(row: any): AttendanceEntry {
   };
 }
 
-const MOCK_SAMPLE_ENTRIES: AttendanceEntry[] = [
-  { id: 'sample-1', date: '2026-04-05', attendance: 142, year: 2026, month: 4, week: 14, lag1: 138, lag4: 135, roll4: 136, delta1: 4, delta4: 7, isSummer: 0, isHolidaySeason: 0, churchEvent: 'Easter', isFastSunday: 1, low_temp: 48, high_temp: 68, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-2', date: '2026-04-12', attendance: 135, year: 2026, month: 4, week: 15, lag1: 142, lag4: 136, roll4: 138, delta1: -7, delta4: -1, isSummer: 0, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 50, high_temp: 70, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-3', date: '2026-04-19', attendance: 139, year: 2026, month: 4, week: 16, lag1: 135, lag4: 138, roll4: 138, delta1: 4, delta4: 1, isSummer: 0, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 52, high_temp: 72, rainfall: 0.1, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-4', date: '2026-04-26', attendance: 140, year: 2026, month: 4, week: 17, lag1: 139, lag4: 142, roll4: 139, delta1: 1, delta4: -2, isSummer: 0, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 55, high_temp: 75, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-5', date: '2026-05-03', attendance: 148, year: 2026, month: 5, week: 18, lag1: 140, lag4: 135, roll4: 141, delta1: 8, delta4: 13, isSummer: 0, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 1, low_temp: 58, high_temp: 78, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-6', date: '2026-05-10', attendance: 155, year: 2026, month: 5, week: 19, lag1: 148, lag4: 139, roll4: 146, delta1: 7, delta4: 16, isSummer: 0, isHolidaySeason: 0, churchEvent: 'Mothers Day', isFastSunday: 0, low_temp: 60, high_temp: 80, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-7', date: '2026-05-17', attendance: 143, year: 2026, month: 5, week: 20, lag1: 155, lag4: 140, roll4: 147, delta1: -12, delta4: 3, isSummer: 0, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 62, high_temp: 82, rainfall: 0.2, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-8', date: '2026-05-24', attendance: 141, year: 2026, month: 5, week: 21, lag1: 143, lag4: 148, roll4: 147, delta1: -2, delta4: -7, isSummer: 0, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 64, high_temp: 84, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-9', date: '2026-05-31', attendance: 138, year: 2026, month: 5, week: 22, lag1: 141, lag4: 155, roll4: 144, delta1: -3, delta4: -17, isSummer: 0, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 65, high_temp: 85, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-10', date: '2026-06-07', attendance: 132, year: 2026, month: 6, week: 23, lag1: 138, lag4: 143, roll4: 139, delta1: -6, delta4: -11, isSummer: 1, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 1, low_temp: 68, high_temp: 88, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-11', date: '2026-06-14', attendance: 130, year: 2026, month: 6, week: 24, lag1: 132, lag4: 141, roll4: 135, delta1: -2, delta4: -11, isSummer: 1, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 70, high_temp: 90, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-12', date: '2026-06-21', attendance: 145, year: 2026, month: 6, week: 25, lag1: 130, lag4: 138, roll4: 136, delta1: 15, delta4: 7, isSummer: 1, isHolidaySeason: 0, churchEvent: 'Fathers Day', isFastSunday: 0, low_temp: 72, high_temp: 92, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-13', date: '2026-06-28', attendance: 134, year: 2026, month: 6, week: 26, lag1: 145, lag4: 132, roll4: 135, delta1: -11, delta4: 2, isSummer: 1, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 71, high_temp: 91, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-14', date: '2026-07-05', attendance: 128, year: 2026, month: 7, week: 27, lag1: 134, lag4: 130, roll4: 134, delta1: -6, delta4: -2, isSummer: 1, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 1, low_temp: 73, high_temp: 93, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-15', date: '2026-07-12', attendance: 136, year: 2026, month: 7, week: 28, lag1: 128, lag4: 145, roll4: 136, delta1: 8, delta4: -9, isSummer: 1, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 70, high_temp: 89, rainfall: 0.1, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-  { id: 'sample-16', date: '2026-07-19', attendance: 139, year: 2026, month: 7, week: 29, lag1: 136, lag4: 134, roll4: 134, delta1: 3, delta4: 5, isSummer: 1, isHolidaySeason: 0, churchEvent: 'None', isFastSunday: 0, low_temp: 69, high_temp: 88, rainfall: 0, snowfall: 0, groupId: 'demo-group-1', createdBy: 'Demo Admin' },
-];
-
-function getLocalStoredEntries(groupId: string): AttendanceEntry[] {
-  try {
-    const raw = localStorage.getItem(`cast_entries_${groupId}`);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-  } catch (e) {
-    console.error('Failed reading localStorage entries:', e);
-  }
-  const initial = MOCK_SAMPLE_ENTRIES.map(e => ({ ...e, groupId }));
-  try {
-    localStorage.setItem(`cast_entries_${groupId}`, JSON.stringify(initial));
-  } catch (e) {
-    // ignore
-  }
-  return initial;
-}
-
-function saveLocalStoredEntries(groupId: string, entries: AttendanceEntry[]) {
-  try {
-    localStorage.setItem(`cast_entries_${groupId}`, JSON.stringify(entries));
-  } catch (e) {
-    console.error('Failed writing localStorage entries:', e);
-  }
-}
-
 async function loadEntriesFromSupabase(groupId: string | null): Promise<AttendanceEntry[]> {
   if (!groupId) {
     return [];
@@ -444,32 +399,24 @@ async function loadEntriesFromSupabase(groupId: string | null): Promise<Attendan
       .order('date', { ascending: true });
 
     if (error) throw error;
-    if (data && data.length > 0) {
-      return data.map(mapRowToEntry);
-    }
-    return getLocalStoredEntries(groupId);
+
+    return (data ?? []).map(mapRowToEntry);
   } catch (error) {
-    console.warn('Error loading from Supabase, using local entries:', error);
-    return getLocalStoredEntries(groupId);
+    console.error('Error loading from Supabase:', error);
+    return [];
   }
 }
 
 /** Like loadEntriesFromSupabase, but reports failure to the caller instead of swallowing it. */
 async function loadEntriesOrThrow(groupId: string): Promise<AttendanceEntry[]> {
-  try {
-    const { data, error } = await supabase
-      .from('attendance_entries')
-      .select('*')
-      .eq('group_id', groupId)
-      .order('date', { ascending: true });
+  const { data, error } = await supabase
+    .from('attendance_entries')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('date', { ascending: true });
 
-    if (!error && data && data.length > 0) {
-      return data.map(mapRowToEntry);
-    }
-  } catch (e) {
-    console.warn('Supabase query failed, falling back to local stored data:', e);
-  }
-  return getLocalStoredEntries(groupId);
+  if (error) throw error;
+  return (data ?? []).map(mapRowToEntry);
 }
 
 export function useAttendanceData(groupId: string | null) {
@@ -605,31 +552,41 @@ export function useAttendanceData(groupId: string | null) {
   }, [sorted]);
 
   const deleteEntry = async (id: string) => {
+    // Snapshot so we can roll the optimistic removal back if the server
+    // rejects (or silently no-ops) the delete.
     const previousEntries = entries;
-    const nextEntries = prev => {
-      const updated = prev.filter(e => e.id !== id);
-      if (groupId) saveLocalStoredEntries(groupId, updated);
-      return updated;
-    };
-    setEntries(nextEntries);
+    setEntries(prev => prev.filter(e => e.id !== id));
 
-    try {
-      const query = supabase
-        .from('attendance_entries')
-        .delete()
-        .eq('id', id);
+    // `.select()` makes Supabase return the rows it actually deleted.
+    // Without it, a delete that Row-Level Security blocks comes back with
+    // error === null and simply removes 0 rows - so the UI would think it
+    // succeeded while the row is still in the database and reappears on
+    // the next load/realtime sync. That "delete does nothing" is exactly
+    // what this guards against.
+    const query = supabase
+      .from('attendance_entries')
+      .delete()
+      .eq('id', id);
 
-      if (groupId) {
-        query.eq('group_id', groupId);
-      }
+    if (groupId) {
+      query.eq('group_id', groupId);
+    }
 
-      const { data: deletedRows, error } = await query.select('id');
+    const { data: deletedRows, error } = await query.select('id');
 
-      if (error || !deletedRows || deletedRows.length === 0) {
-        if (error) console.warn('Supabase delete error (using local delete):', error);
-      }
-    } catch (err) {
-      console.warn('Supabase delete exception (kept local change):', err);
+    if (error) {
+      console.error('Error deleting entry:', error);
+      setEntries(previousEntries);
+      toast.error('Could not delete this record. Please try again.');
+      return;
+    }
+
+    if (!deletedRows || deletedRows.length === 0) {
+      // No error, but nothing was deleted - almost always a permissions
+      // (RLS) issue: the current user isn't allowed to delete this row.
+      console.warn('Delete affected 0 rows (likely blocked by RLS):', id);
+      setEntries(previousEntries);
+      toast.error("You don't have permission to delete this record.");
     }
   };
 
@@ -740,16 +697,15 @@ export function useAttendanceData(groupId: string | null) {
     const fullName = await getCurrentUserFullName();
 
     // Check if an entry already exists for this date
-    let existingEntries: any[] | null = null;
-    try {
-      const { data } = await supabase
-        .from('attendance_entries')
-        .select('*')
-        .eq('date', raw.date)
-        .eq('group_id', groupId);
-      existingEntries = data;
-    } catch (e) {
-      existingEntries = entries.filter(e => e.date === raw.date && e.groupId === groupId);
+    const { data: existingEntries, error: queryError } = await supabase
+      .from('attendance_entries')
+      .select('*')
+      .eq('date', raw.date)
+      .eq('group_id', groupId);
+
+    if (queryError) {
+      console.error('Error checking for existing entry:', queryError);
+      throw queryError;
     }
 
     let attendanceToStore = raw.attendance;
@@ -763,17 +719,14 @@ export function useAttendanceData(groupId: string | null) {
       entryIdToReplace = existing.id;
 
       let priorContributors: Contributor[] = [];
-      if (existing.averaged_from || existing.averagedFrom) {
+      if (existing.averaged_from) {
         try {
-          priorContributors = typeof existing.averaged_from === 'string'
-            ? JSON.parse(existing.averaged_from)
-            : (existing.averagedFrom ?? []);
+          priorContributors = JSON.parse(existing.averaged_from);
         } catch (e) {
           console.error('Failed to parse existing averaged_from:', e);
         }
-      } else if (existing.created_by || existing.createdBy) {
-        const creator = existing.created_by || existing.createdBy;
-        priorContributors = [{ email: creator, attendance: existing.attendance }];
+      } else if (existing.created_by) {
+        priorContributors = [{ email: existing.created_by, attendance: existing.attendance }];
       }
 
       const merged = mergeContributor(priorContributors, fullName, raw.attendance);
@@ -781,10 +734,35 @@ export function useAttendanceData(groupId: string | null) {
       averagedFrom = merged.contributors;
     }
 
-    const createdId = entryIdToReplace || `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const insertData: any = {
+      date: raw.date,
+      attendance: attendanceToStore,
+      year,
+      month,
+      week,
+      lag1: lags.lag1,
+      lag4: lags.lag4,
+      roll4: lags.roll4,
+      delta1: lags.delta1,
+      delta4: lags.delta4,
+      is_summer: raw.isSummer,
+      is_holiday_season: raw.isHolidaySeason,
+      church_event: raw.churchEvent,
+      is_fast_sunday: raw.isFastSunday,
+      high_temp: weather?.high_temp || WEATHER_DEFAULTS.highTemp,
+      low_temp: weather?.low_temp || WEATHER_DEFAULTS.lowTemp,
+      rainfall: weather?.rainfall || 0,
+      snowfall: weather?.snowfall || 0,
+      created_by: fullName,
+      group_id: groupId,
+    };
+
+    if (averagedFrom) {
+      insertData.averaged_from = JSON.stringify(averagedFrom);
+    }
 
     const newEntry: AttendanceEntry = {
-      id: createdId,
+      id: entryIdToReplace ?? '',
       date: raw.date,
       attendance: attendanceToStore,
       year,
@@ -808,55 +786,35 @@ export function useAttendanceData(groupId: string | null) {
       averagedFrom,
     };
 
-    setEntries(prev => {
-      const exists = prev.some(e => e.id === createdId || e.date === raw.date);
-      const updated = exists
-        ? prev.map(e => (e.id === createdId || e.date === raw.date ? newEntry : e))
-        : [...prev, newEntry];
-      saveLocalStoredEntries(groupId, updated);
-      return updated;
-    });
+    // If replacing, update the existing entry instead of delete+insert
+    if (entryIdToReplace) {
+      const { error } = await supabase
+        .from('attendance_entries')
+        .update(insertData)
+        .eq('id', entryIdToReplace);
 
-    try {
-      const insertData: any = {
-        date: raw.date,
-        attendance: attendanceToStore,
-        year,
-        month,
-        week,
-        lag1: lags.lag1,
-        lag4: lags.lag4,
-        roll4: lags.roll4,
-        delta1: lags.delta1,
-        delta4: lags.delta4,
-        is_summer: raw.isSummer,
-        is_holiday_season: raw.isHolidaySeason,
-        church_event: raw.churchEvent,
-        is_fast_sunday: raw.isFastSunday,
-        high_temp: weather?.high_temp || WEATHER_DEFAULTS.highTemp,
-        low_temp: weather?.low_temp || WEATHER_DEFAULTS.lowTemp,
-        rainfall: weather?.rainfall || 0,
-        snowfall: weather?.snowfall || 0,
-        created_by: fullName,
-        group_id: groupId,
-      };
-
-      if (averagedFrom) {
-        insertData.averaged_from = JSON.stringify(averagedFrom);
+      if (error) {
+        console.error('Error updating entry:', error);
+        throw error;
       }
 
-      if (entryIdToReplace) {
-        await supabase
-          .from('attendance_entries')
-          .update(insertData)
-          .eq('id', entryIdToReplace);
-      } else {
-        await supabase
-          .from('attendance_entries')
-          .insert(insertData);
+      setEntries(prev => prev.map(e => (e.id === entryIdToReplace ? newEntry : e)));
+    } else {
+      const { data: insertedEntry, error } = await supabase
+        .from('attendance_entries')
+        .insert(insertData)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error adding entry:', error);
+        throw error;
       }
-    } catch (err) {
-      console.warn('Supabase save exception (kept local entry):', err);
+
+      if (insertedEntry) {
+        const savedEntry = mapRowToEntry(insertedEntry);
+        setEntries(prev => [...prev, savedEntry]);
+      }
     }
   };
 
